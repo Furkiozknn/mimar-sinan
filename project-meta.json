@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0.0",
+  "id": "mimar-sinan",
+  "owner": "Furkiozknn",
+  "repository": "https://github.com/Furkiozknn/mimar-sinan",
+  "homepage": "https://furkiozknn.github.io/mimar-sinan/",
+  "releases": null,
+  "status": "active",
+  "category": "game",
+  "platform": [
+    "web"
+  ],
+  "primary_language": "JavaScript",
+  "technologies": [
+    "Three.js r170",
+    "Canvas 2D",
+    "Web Audio API"
+  ],
+  "version": null,
+  "license": "MIT",
+  "topics": [
+    "browser-game",
+    "threejs",
+    "puzzle-game",
+    "physics-game",
+    "architecture",
+    "claude-code",
+    "claude-game-arena"
+  ],
+  "summary": "3D construction-physics puzzle about building Ottoman mosques, built by Claude Fable 5.1 · Osmanlı camileri inşa ettiğin 3D yapı fiziği bulmacası, Claude Fable 5.1 yaptı",
+  "key_features": [
+    "A masonry simulation written from scratch: thrust vectors, self-weight and the middle-third rule decide whether each pier stands",
+    "Sinan's lessons as real solutions: half-domes, weight towers, hidden and stepped buttresses, an octagon of eight piers",
+    "15 commissions in 3 periods, up to Süleymaniye and Selimiye, with stone budgets, open windows, minarets and earthquake tests",
+    "Live stress colours, thrust-line view, hints from each commission's reference solution and collapses you can watch",
+    "The ?auto bot cleared 15/15 commissions with 45/45 stars; node test-levels.js verifies all 15 reference solutions; one index.html, everything generated in code"
+  ],
+  "media": {
+    "hero": "docs/02-gameplay.png",
+    "screenshots": [
+      "docs/card.jpg",
+      "docs/02-gameplay.png",
+      "docs/01-title.png",
+      "docs/03-earthquake.png",
+      "docs/04-result.png",
+      "docs/05-collapse.png",
+      "docs/06-sunset.png",
+      "docs/07-phone.png"
+    ],
+    "gifs": [
+      "docs/gameplay.gif"
+    ],
+    "videos": [
+      "docs/gameplay.mp4"
+    ]
+  },
+  "tests": null,
+  "ci": {
+    "workflows": [],
+    "badge": null
+  },
+  "docs": {
+    "readme": "README.md",
+    "changelog": null,
+    "version_history": null,
+    "roadmap": null,
+    "security": null,
+    "contributing": null,
+    "license_file": "LICENSE"
+  },
+  "social": {
+    "headline": "Build Sinan's mosques, pull the scaffolding and let the thrust lines decide · Sinan'ın camilerini kur, iskeleyi kaldır, itki çizgileri karar versin",
+    "hashtags": [
+      "claudecode",
+      "indiegame"
+    ],
+    "primary_link": "https://furkiozknn.github.io/mimar-sinan/"
+  },
+  "provenance": {
+    "generated_at": "2026-10-27",
+    "generator": "hand-written",
+    "rule": "mechanical fields read from the repository; editorial fields hand-written from the README and index.html; no field is generated from a guess"
+  }
+}
