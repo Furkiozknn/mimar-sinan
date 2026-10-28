@@ -18,6 +18,10 @@
 
 <p align="center"><b>Play online: <a href="https://furkiozknn.github.io/mimar-sinan/">https://furkiozknn.github.io/mimar-sinan/</a></b> (desktop and phone, no install)</p>
 
+<!-- portals:start -->
+<p align="center">Also on: <a href="https://furkiozknn.itch.io/mimar-sinan">itch.io</a></p>
+<!-- portals:end -->
+
 ## Highlights
 
 - **A real masonry simulation, written from scratch.** Every arch, dome and half-dome pushes outward; the game sums the
@@ -185,3 +189,5 @@ masaüstünde ve telefonda tarayıcıda oynanır. Claude Fable 5.1 tarafından C
 ## License
 
 MIT, see [LICENSE](LICENSE).
+
+Like the game? You can support new rounds on [Buy Me a Coffee](https://buymeacoffee.com/furkiozkann). The game stays free.
