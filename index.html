@@ -1337,7 +1337,7 @@ function pieceOrigin(L, p, pieces, out) {
   return out;
 }
 const STRESS_COL = [new THREE.Color(0xc6ebb4), new THREE.Color(0xf2d070), new THREE.Color(0xe85a48)];
-function stressTint(s, out) { if (s < 0.5) out.copy(STRESS_COL[0]).lerp(STRESS_COL[1], s / 0.5); else out.copy(STRESS_COL[1]).lerp(STRESS_COL[2], Math.min(1, (s - 0.5) / 0.45)); return out; }
+function stressTint(s, out) { if (s < 0.5) out.copy(STRESS_COL[0]).lerp(STRESS_COL[1], s / 0.5); else out.copy(STRESS_COL[1]).lerp(STRESS_COL[2], Math.min(1, Math.max(0, (s - 0.6) / 0.4))); return out; } // amber up to the star threshold, red toward the limit
 
 // ---------------------------------------------------------------------------
 // Game state
