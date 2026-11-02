@@ -139,6 +139,41 @@ The live state is on `window.mimar`.
   </tr>
 </table>
 
+## Redesign (2026-11)
+
+**Art direction: blueprint + warm limestone.** The site is an architect's drawing come to life: the plan is inked in
+blueprint blue on a flagstone plinth, the building rises in running-bond limestone ashlar under lead domes, and the
+city and the sea lie below in afternoon haze. The UI is drafting paper with blue ink; the title card is the blueprint
+sheet itself, with a line-drawn section of the mosque, dimension lines and a north arrow.
+
+<p align="center"><img src="docs/redesign-before-after.png" alt="Before and after the redesign: the same Şehzade build, left the old brown domes on bare ground, right limestone ashlar on an inked plan with the city in haze"></p>
+
+What changed (gameplay, levels, scoring, saves, the bot and the flags are untouched):
+
+- **Palette and light.** Limestone `#E3D5B8`, lead `#6E7B85`, İznik blue `#2F6E9E`, blueprint `#1E3A5F`, line white
+  `#E8F1FA`. Lower, warmer sun with longer shadows, a glow around the sun, a sky that brightens toward it, denser
+  warm fog so the city and the sea dissolve into haze; the ending still turns to sunset.
+- **Environment.** Mottled earth texture on the hill with scrub patches and rocky outcrops; a sunken paved forecourt
+  the plinth and its steps stand proud of; a forecourt wall with an arched gate; an ablution fountain, the
+  architect's drafting table with a blueprint, more cypresses; a bigger city (380 textured houses, 7 domed mosques
+  with minarets, a quay); pale afternoon water with drifting streaks and a glitter band; gulls circling above the
+  site.
+- **Pieces.** Every piece gets a box-projected running-bond ashlar texture at world scale (one tile per unit), so
+  piers, walls, arches and drums read as cut stone; lead domes keep a light-to-dark gradient with sheet seams. The
+  stress colours are now a light tint plus a warm glow instead of a brown multiply, so a loaded dome no longer turns
+  brown; failing pieces still go red.
+- **Animation and FX.** Placed pieces drop in and settle; ground pieces that fail now tip over about their base edge
+  in the direction of the thrust (minarets fall like trees) before the debris and dust; the sea texture drifts.
+- **UI.** Drafting-paper panels (faint grid, blue rule, inner frame) with Bahnschrift / DIN-style headings and
+  tabular numbers, a ruler-style stone budget, blueprint title sheet with corner marks, paper piece tray with
+  blue-ink icons, blueprint-blue primary buttons. Every screen is restyled: title, commissions, brief, pause,
+  settings, result, ending, toasts, legend and requirement chips. Phone portrait and landscape checked at 500×900.
+
+Measured on the Intel UHD 620 at 1280×720 (headless Chrome, same camera): title 25 → 33 draw calls, Şehzade build
+53 → 65, earthquake test 58 → 66, Süleymaniye build 54 → 62, ending 62 → 67; 60 fps throughout, before and after. The
+`?auto` bot still finishes 15/15 commissions with 45/45 stars and 0 JS errors, with assets and with `?noassets`;
+`node test-levels.js` still passes all 15 reference solutions.
+
 ## Running locally
 
 Serve the folder over HTTP, for example:

@@ -1361,7 +1361,7 @@ function applyTints(sim, cracking) {
     const r = sim ? sim.res.get(p) : null;
     if (!SET.stress || !r) { m.material.color.set(0xffffff); m.material.emissive.set(0); continue; }
     // safe pieces keep their limestone; stressed ones warm up (a light tint plus an emissive glow, so lead domes do not turn brown)
-    const s = Math.min(1, r.stress); stressTint(r.stress, _col); m.material.color.set(0xffffff).lerp(_col, 0.1 + 0.3 * s); m.material.emissive.copy(_col).multiplyScalar(0.04 + 0.3 * s);
+    const s = Math.min(1, r.stress), k = s >= 1 ? 1 : s * 0.7; stressTint(r.stress, _col); m.material.color.set(0xffffff).lerp(_col, 0.08 + 0.3 * k); m.material.emissive.copy(_col).multiplyScalar(0.03 + 0.28 * k);
   }
 }
 function addMesh(p) {
@@ -1451,8 +1451,15 @@ function stepCollapse(dt) {
   for (const b of G.bodiesList) {
     b.t += dt;
     if (b.phase === 'crack') { active = true; b.m.position.set(b.base.x + (Math.random() - 0.5) * 0.04, b.base.y, b.base.z + (Math.random() - 0.5) * 0.04); b.m.material.color.set(0x7a5a4a).lerp(STRESS_COL[2], 0.5 + Math.sin(b.t * 30) * 0.3);
-      if (b.t > 0.7 + Math.random() * 0.3) { b.phase = 'fall'; const support = PT[b.p.t].layer !== 'ground'; const k = support ? 0.6 : 1.4 + Math.min(2, b.size * 0.3); b.v.set(b.dir[0] * k, support ? -0.5 : 0.6, b.dir[1] * k); b.w.set(b.dir[1] * (support ? 0.8 : 2.2), (Math.random() - 0.5) * 0.6, -b.dir[0] * (support ? 0.8 : 2.2)); if (b.p.t === 'tower') { b.v.set(b.dir[0] * 1.5, 1.5, b.dir[1] * 1.5); } sfxThud(0.5, 60); } continue; }
+      if (b.t > 0.7 + Math.random() * 0.3) { b.phase = 'fall'; const support = PT[b.p.t].layer !== 'ground'; const k = support ? 0.6 : 1.4 + Math.min(2, b.size * 0.3); b.v.set(b.dir[0] * k, support ? -0.5 : 0.6, b.dir[1] * k); b.w.set(b.dir[1] * (support ? 0.8 : 2.2), (Math.random() - 0.5) * 0.6, -b.dir[0] * (support ? 0.8 : 2.2)); if (b.p.t === 'tower') { b.v.set(b.dir[0] * 1.5, 1.5, b.dir[1] * 1.5); } if (!support) { b.tip = 0; b.tipV = 0.25; b.axis = new THREE.Vector3(b.dir[1], 0, -b.dir[0]); } sfxThud(0.5, 60); } continue; }
     if (b.settled) continue; active = true;
+    // ground pieces tip over about their base edge in the direction of the thrust, like a felled tree
+    if (b.tip !== undefined) {
+      b.tipV += dt * 3.2 * (0.35 + Math.sin(b.tip)); b.tip = Math.min(Math.PI / 2, b.tip + b.tipV * dt);
+      const c = Math.cos(b.tip), s = Math.sin(b.tip); b.m.position.set(b.base.x + b.dir[0] * 0.5 * (1 - c), b.base.y + 0.5 * s, b.base.z + b.dir[1] * 0.5 * (1 - c)); b.m.quaternion.setFromAxisAngle(b.axis, b.tip);
+      if (b.tip >= Math.PI / 2) { b.settled = true; if (!b.hit) { b.hit = true; const len = Math.min(3, b.size * 0.5); sfxThud(0.7, 45); scatter(b.base.x + b.dir[0] * len, 0.2, b.base.z + b.dir[1] * len, Math.min(30, 6 + b.size * 5), b.grey); puff(b.base.x + b.dir[0] * len, 0.2, b.base.z + b.dir[1] * len, 24, 1.2 + b.size * 0.3, 1.4); G.shake = Math.max(G.shake, 0.25); } }
+      continue;
+    }
     b.v.y -= 11 * dt; b.m.position.addScaledVector(b.v, dt); b.m.rotation.x += b.w.x * dt; b.m.rotation.y += b.w.y * dt; b.m.rotation.z += b.w.z * dt;
     const rest = Math.min(0.5, b.size * 0.25);
     if (b.m.position.y < rest) { b.m.position.y = rest; if (!b.hit) { b.hit = true; sfxThud(0.7, 45); scatter(b.m.position.x, 0.2, b.m.position.z, Math.min(30, 6 + b.size * 5), b.grey); puff(b.m.position.x, 0.2, b.m.position.z, 24, 1.6 + b.size * 0.4, 1.4); G.shake = Math.max(G.shake, 0.25); }
