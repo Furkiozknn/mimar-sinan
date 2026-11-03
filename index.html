@@ -19,7 +19,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:#e6d6b9;color:var(--ink);
   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent;
-  touch-action:none;user-select:none;-webkit-user-select:none}
+  user-select:none;-webkit-user-select:none}
 #c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none;touch-action:none}
 [hidden]{display:none!important}
 button{font:inherit;color:inherit;cursor:pointer}
@@ -260,12 +260,12 @@ input[type=range]{flex:1;accent-color:var(--bp);height:44px;margin:0}
     <span class="stars" id="hStars"></span>
   </div>
   <div class="acts">
-    <button class="ibtn" id="bHint" data-tt="hint"><i data-icon="hint"></i></button>
-    <button class="ibtn" id="bUndo" data-tt="undo"><i data-icon="undo"></i></button>
-    <button class="ibtn" id="bStress" data-tt="stressView"><i data-icon="stress"></i></button>
-    <button class="ibtn" id="bPause" data-tt="pause"><i data-icon="pause"></i></button>
-    <button class="ibtn" id="bSound" data-tt="sound"><i data-icon="sound"></i></button>
-    <button class="ibtn" id="bLang" data-tt="language">TR</button>
+    <button class="ibtn" id="bHint" data-tt="hint" aria-label="İpucu"><i data-icon="hint"></i></button>
+    <button class="ibtn" id="bUndo" data-tt="undo" aria-label="Geri al"><i data-icon="undo"></i></button>
+    <button class="ibtn" id="bStress" data-tt="stressView" aria-label="Gerilme görünümü"><i data-icon="stress"></i></button>
+    <button class="ibtn" id="bPause" data-tt="pause" aria-label="Duraklat"><i data-icon="pause"></i></button>
+    <button class="ibtn" id="bSound" data-tt="sound" aria-label="Ses"><i data-icon="sound"></i></button>
+    <button class="ibtn" id="bLang" data-tt="language" aria-label="Dil">TR</button>
   </div>
 </div>
 <div class="notes"><div id="reqs" class="reqs" hidden></div><div id="toasts" class="toasts"></div></div>
@@ -279,15 +279,15 @@ input[type=range]{flex:1;accent-color:var(--bp);height:44px;margin:0}
   <div class="grp" id="pieceGrp"></div>
   <div class="sep"></div>
   <div class="grp">
-    <button class="cbtn" id="bRotate" data-tt="rotate"><i data-icon="rotate"></i></button>
-    <button class="cbtn" id="bErase" data-tt="erase"><i data-icon="erase"></i></button>
+    <button class="cbtn" id="bRotate" data-tt="rotate" aria-label="Döndür"><i data-icon="rotate"></i></button>
+    <button class="cbtn" id="bErase" data-tt="erase" aria-label="Kaldır"><i data-icon="erase"></i></button>
   </div>
   <div class="sep"></div>
   <div class="grp"><button class="test" id="bTest"><i data-icon="scaffold"></i><span data-t="test"></span></button></div>
 </div>
 
 <!-- Title -->
-<div id="title" class="overlay">
+<div id="title" class="overlay" role="dialog" aria-modal="true" aria-label="Mimar Sinan">
   <div class="panel glass title bp">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
     <div class="logo" id="logoBig"></div>
@@ -309,16 +309,16 @@ input[type=range]{flex:1;accent-color:var(--bp);height:44px;margin:0}
 </div>
 
 <!-- Period map -->
-<div id="map" class="overlay" hidden>
+<div id="map" class="overlay" role="dialog" aria-modal="true" aria-labelledby="mapHeading" hidden>
   <div class="panel glass wide">
-    <div class="rhead"><h2 class="serif" data-t="commissions"></h2><span class="stars" id="mapStars"></span></div>
+    <div class="rhead"><h2 id="mapHeading" class="serif" data-t="commissions"></h2><span class="stars" id="mapStars"></span></div>
     <div class="pcards" id="pcards"></div>
     <div class="row end" style="margin-top:12px"><button class="btn" id="bMapBack"><span data-t="mainMenu"></span></button></div>
   </div>
 </div>
 
 <!-- Commission brief -->
-<div id="brief" class="overlay" hidden>
+<div id="brief" class="overlay" role="dialog" aria-modal="true" aria-labelledby="brTitle" hidden>
   <div class="panel glass">
     <h2 class="serif" id="brTitle"></h2>
     <div class="col">
@@ -334,9 +334,9 @@ input[type=range]{flex:1;accent-color:var(--bp);height:44px;margin:0}
 </div>
 
 <!-- Pause -->
-<div id="pause" class="overlay" hidden>
+<div id="pause" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pauseHeading" hidden>
   <div class="panel glass col">
-    <h2 class="serif" data-t="paused"></h2>
+    <h2 id="pauseHeading" class="serif" data-t="paused"></h2>
     <button class="btn primary w" id="bResume"><span data-t="resume"></span></button>
     <button class="btn w" id="bRestart"><span data-t="restart"></span></button>
     <button class="btn w" id="bPSettings"><span data-t="settings"></span></button>
@@ -345,12 +345,12 @@ input[type=range]{flex:1;accent-color:var(--bp);height:44px;margin:0}
 </div>
 
 <!-- Settings -->
-<div id="settings" class="overlay" hidden>
+<div id="settings" class="overlay" role="dialog" aria-modal="true" aria-labelledby="setHeading" hidden>
   <div class="panel glass col">
-    <h2 class="serif" data-t="settings"></h2>
-    <label class="sl"><span data-t="master"></span><input type="range" id="sMaster" min="0" max="1" step="0.05"></label>
-    <label class="sl"><span data-t="music"></span><input type="range" id="sMusic" min="0" max="1" step="0.05"></label>
-    <label class="sl"><span data-t="effects"></span><input type="range" id="sSfx" min="0" max="1" step="0.05"></label>
+    <h2 id="setHeading" class="serif" data-t="settings"></h2>
+    <label class="sl"><span data-t="master"></span><input type="range" id="sMaster" min="0" max="1" step="0.05" aria-label="Ana ses" data-tt="master"></label>
+    <label class="sl"><span data-t="music"></span><input type="range" id="sMusic" min="0" max="1" step="0.05" aria-label="Müzik" data-tt="music"></label>
+    <label class="sl"><span data-t="effects"></span><input type="range" id="sSfx" min="0" max="1" step="0.05" aria-label="Efektler" data-tt="effects"></label>
     <div class="row"><span class="lbl" data-t="language"></span><div class="seg" id="segLang"><button data-v="tr">Türkçe</button><button data-v="en">English</button></div></div>
     <div class="row"><span class="lbl" data-t="quality"></span><div class="seg" id="segQ"><button data-v="low" data-t="low"></button><button data-v="high" data-t="high"></button></div></div>
     <div class="row"><span class="lbl" data-t="fullscreen"></span><button class="btn" id="bFull"><i data-icon="full"></i><span data-t="fullscreen"></span></button></div>
@@ -359,7 +359,7 @@ input[type=range]{flex:1;accent-color:var(--bp);height:44px;margin:0}
 </div>
 
 <!-- Result (the camera circles the mosque behind it) -->
-<div id="result" class="overlay clear" hidden>
+<div id="result" class="overlay clear" role="dialog" aria-modal="true" aria-labelledby="rTitle" hidden>
   <div class="panel glass side">
     <div class="rhead"><h2 class="serif" id="rTitle"></h2><div class="bigstars" id="rStars"></div></div>
     <p class="rec" id="rRec" hidden></p>
@@ -375,9 +375,9 @@ input[type=range]{flex:1;accent-color:var(--bp);height:44px;margin:0}
 </div>
 
 <!-- Ending -->
-<div id="ending" class="overlay clear" hidden>
+<div id="ending" class="overlay clear" role="dialog" aria-modal="true" aria-labelledby="endHeading" hidden>
   <div class="panel glass side">
-    <h2 class="serif" data-t="endTitle" style="font-size:26px"></h2>
+    <h2 id="endHeading" class="serif" data-t="endTitle" style="font-size:26px"></h2>
     <p class="sub" data-t="endSub" style="font-size:14px;color:var(--ink2);line-height:1.45"></p>
     <div class="kv" id="eKv"></div>
     <div class="col">
@@ -1525,6 +1525,23 @@ document.addEventListener('visibilitychange', () => { G.hidden = document.hidden
 // ---------------------------------------------------------------------------
 const OVERLAYS = ['title', 'map', 'brief', 'pause', 'settings', 'result', 'ending'];
 function showOverlay(id) { for (const o of OVERLAYS) $(o).hidden = o !== id; if (id) { const b = $(id).querySelector('button:not([hidden]):not(:disabled)'); if (b) b.focus(); } }
+addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const activeOverlay = OVERLAYS.map(id => $(id)).find(el => el && !el.hidden);
+  if (!activeOverlay) return;
+  const focusables = Array.from(activeOverlay.querySelectorAll('button:not([hidden]):not(:disabled), input:not([hidden]):not(:disabled), a[href]'));
+  if (!focusables.length) return;
+  const first = focusables[0], last = focusables[focusables.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first || !activeOverlay.contains(document.activeElement)) {
+      last.focus(); e.preventDefault();
+    }
+  } else {
+    if (document.activeElement === last || !activeOverlay.contains(document.activeElement)) {
+      first.focus(); e.preventDefault();
+    }
+  }
+});
 function hudVisible(v) { $('hud').hidden = !v; $('tools').hidden = !v; $('reqs').hidden = !v; $('legend').hidden = !v; }
 function goTitle() { G.state = 'title'; G.paused = false; hudVisible(false); showOverlay('title'); refreshTitle(); if (!G.L) { G.L = LEVELS[0]; drawGrid(G.L); placeProps(G.L); frameLevel(); } G.camDist = Math.max(G.camDist, 22); G.camPitch = 0.5; }
 function refreshTitle() {
@@ -1639,7 +1656,15 @@ function openSettings(from) {
 }
 function closeSettings() { saveSettings(); showOverlay(G.settingsFrom === 'pause' ? 'pause' : 'title'); if (G.settingsFrom === 'title') refreshTitle(); }
 function toast(msg, kind = 'info') {
-  const el = document.createElement('div'); el.className = 'toast glass ' + kind; el.textContent = msg; $('toasts').appendChild(el);
+  const el = document.createElement('div'); el.className = 'toast glass ' + kind;
+  if (kind === 'bad') {
+    const sym = document.createElement('span'); sym.textContent = '✕ '; sym.setAttribute('aria-hidden', 'true'); sym.style.fontWeight = 'bold';
+    el.appendChild(sym);
+    el.appendChild(document.createTextNode(msg));
+  } else {
+    el.textContent = msg;
+  }
+  $('toasts').appendChild(el);
   while ($('toasts').children.length > 3) $('toasts').firstChild.remove();
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, 2200);
 }
@@ -1647,7 +1672,7 @@ function fillIcons(root = document) { for (const el of root.querySelectorAll('i[
 function applyTexts() {
   document.documentElement.lang = SET.lang;
   for (const el of document.querySelectorAll('[data-t]')) { const k = el.dataset.t; if (k === 'legendKeys') el.innerHTML = t(k); else el.textContent = t(k); }
-  for (const el of document.querySelectorAll('[data-tt]')) el.title = t(el.dataset.tt);
+  for (const el of document.querySelectorAll('[data-tt]')) { const val = t(el.dataset.tt); el.title = val; if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', val); }
   $('bLang').textContent = SET.lang.toUpperCase(); $('bLang2').textContent = SET.lang === 'tr' ? 'EN' : 'TR';
   $('legendKeys').innerHTML = t('legendKeys');
   if (G.state === 'map') buildMap(); if (G.state === 'brief') openBrief(G.li); if (G.state === 'play') { buildTray(); refreshTray(); updateHud(); updateReqs(); }
@@ -1683,7 +1708,7 @@ function updateReqs() {
 }
 function buildTray() {
   const g = $('pieceGrp'); g.innerHTML = '';
-  G.L.tray.forEach((k, i) => { const sp = trayPiece(k); const b = document.createElement('button'); b.className = 'tbtn'; b.dataset.key = k; b.title = pieceName(sp); b.innerHTML = `<small>${i + 1}</small><i data-icon>${ICON[sp.t]}</i><em>${sp.s ? sp.s + ' · ' : ''}${pieceCost(sp)}</em>`; b.addEventListener('click', () => { bootAudio(); selectTray(k); }); g.appendChild(b); });
+  G.L.tray.forEach((k, i) => { const sp = trayPiece(k); const b = document.createElement('button'); b.className = 'tbtn'; b.dataset.key = k; const nm = pieceName(sp); b.title = nm; b.setAttribute('aria-label', nm); b.innerHTML = `<small>${i + 1}</small><i data-icon>${ICON[sp.t]}</i><em>${sp.s ? sp.s + ' · ' : ''}${pieceCost(sp)}</em>`; b.addEventListener('click', () => { bootAudio(); selectTray(k); }); g.appendChild(b); });
 }
 function refreshTray() {
   const left = G.L ? stoneLeft() : 0;
