@@ -528,7 +528,8 @@ const I18N = {
   },
 };
 const t = (k, vars) => { let s = (I18N[SET.lang] || I18N.tr)[k]; if (s === undefined) s = k; if (vars) for (const v in vars) s = s.replace('{' + v + '}', vars[v]); return s; };
-const pieceName = p => t(p.t === 'dome' || p.t === 'half' ? p.t + p.s : p.t);
+// Guard piece name fallback when size is omitted
+const pieceName = p => t((p.t === 'dome' || p.t === 'half') && p.s ? p.t + p.s : p.t);
 
 // ---------------------------------------------------------------------------
 // Icons (inline SVG, no emoji)
@@ -1136,9 +1137,10 @@ const GULL_N = 8;
 const gullGeo = new THREE.BufferGeometry(); gullGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-0.6, 0.12, 0, 0, 0, 0.08, 0, 0, -0.08, 0.6, 0.12, 0, 0, 0, -0.08, 0, 0, 0.08]), 3)); gullGeo.computeVertexNormals();
 const gulls = new THREE.InstancedMesh(gullGeo, new THREE.MeshBasicMaterial({ color: 0xf6f1e6, side: THREE.DoubleSide }), GULL_N); scene.add(gulls);
 const gullSeeds = []; for (let i = 0; i < GULL_N; i++) gullSeeds.push({ r: 9 + rng() * 10, h: 8 + rng() * 6, a: rng() * 6.28, w: 0.12 + rng() * 0.1, f: 4 + rng() * 3 });
+// Hoisted transforms to eliminate per-frame allocations
+const _gm = new THREE.Matrix4(), _gq = new THREE.Quaternion(), _gs = new THREE.Vector3(1, 1, 1), _gp = new THREE.Vector3(), _ge = new THREE.Euler();
 function animateGulls(tm) {
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3(), e = new THREE.Euler();
-  for (let i = 0; i < GULL_N; i++) { const g = gullSeeds[i]; const a = g.a + tm * g.w; p.set(Math.cos(a) * g.r, g.h + Math.sin(tm * 0.7 + i) * 0.6, Math.sin(a) * g.r - 4); e.set(0, -a, Math.sin(tm * g.f + i) * 0.5); q.setFromEuler(e); m.compose(p, q, s); gulls.setMatrixAt(i, m); }
+  for (let i = 0; i < GULL_N; i++) { const g = gullSeeds[i]; const a = g.a + tm * g.w; _gp.set(Math.cos(a) * g.r, g.h + Math.sin(tm * 0.7 + i) * 0.6, Math.sin(a) * g.r - 4); _ge.set(0, -a, Math.sin(tm * g.f + i) * 0.5); _gq.setFromEuler(_ge); _gm.compose(_gp, _gq, _gs); gulls.setMatrixAt(i, _gm); }
   gulls.instanceMatrix.needsUpdate = true;
 }
 
@@ -1242,12 +1244,13 @@ function placeProps(L) {
   for (let i = 0; i < WORKER_N; i++) { const side = i % 4; let x, z; if (side === 0) { x = -ex + 0.4 + i * 0.5; z = ez + 0.3; } else if (side === 1) { x = ex + 0.4; z = -ez + 1 + i * 0.45; } else if (side === 2) { x = ex - i * 0.6; z = ez + 0.2; } else { x = -ex + 0.3; z = -ez + i * 0.5; } workers.push({ x, z, phase: rng() * 6.28, speed: 0.6 + rng() * 0.6, col: pal[i], turban: i % 3 === 0 ? 0xf3ead8 : i % 3 === 1 ? 0xb5452c : 0x3b5b7a, ry: rng() * 6.28 }); bodies.setColorAt(i, _col.set(pal[i])); turbans.setColorAt(i, _col.set(workers[i].turban)); }
   bodies.instanceColor.needsUpdate = true; turbans.instanceColor.needsUpdate = true;
 }
+// Hoisted transforms to eliminate per-frame allocations
+const _pm = new THREE.Matrix4(), _pq = new THREE.Quaternion(), _ps = new THREE.Vector3(1, 1, 1), _pp = new THREE.Vector3(), _pe = new THREE.Euler();
 function animateProps(dt, tm) {
   const wheel = crane.userData.wheel; wheel.rotation.x += dt * 0.35;
   const sway = Math.sin(tm * 0.9) * 0.08; const rope = crane.userData.rope, block = crane.userData.block; const len = 2.6 + Math.sin(tm * 0.25) * 0.9;
   rope.position.set(sway, 6.95 - len / 2, 3.4); rope.scale.y = len; block.position.set(sway * 1.2, 6.95 - len - 0.25, 3.4); block.rotation.y = Math.sin(tm * 0.4) * 0.3;
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3(), e = new THREE.Euler();
-  for (let i = 0; i < workers.length; i++) { const w = workers[i]; const bob = Math.abs(Math.sin(tm * w.speed * 2 + w.phase)) * 0.06; e.set(Math.sin(tm * w.speed + w.phase) * 0.12, w.ry, 0); q.setFromEuler(e); p.set(w.x, 0.26 + bob, w.z); m.compose(p, q, s); bodies.setMatrixAt(i, m); p.y = 0.62 + bob; q.identity(); m.compose(p, q, s); heads.setMatrixAt(i, m); p.y = 0.66 + bob; m.compose(p, q, s); turbans.setMatrixAt(i, m); }
+  for (let i = 0; i < workers.length; i++) { const w = workers[i]; const bob = Math.abs(Math.sin(tm * w.speed * 2 + w.phase)) * 0.06; _pe.set(Math.sin(tm * w.speed + w.phase) * 0.12, w.ry, 0); _pq.setFromEuler(_pe); _pp.set(w.x, 0.26 + bob, w.z); _pm.compose(_pp, _pq, _ps); bodies.setMatrixAt(i, _pm); _pp.y = 0.62 + bob; _pq.identity(); _pm.compose(_pp, _pq, _ps); heads.setMatrixAt(i, _pm); _pp.y = 0.66 + bob; _pm.compose(_pp, _pq, _ps); turbans.setMatrixAt(i, _pm); }
   bodies.instanceMatrix.needsUpdate = heads.instanceMatrix.needsUpdate = turbans.instanceMatrix.needsUpdate = true;
   animateGulls(tm); seaTex.offset.x += dt * 0.004; seaTex.offset.y += dt * 0.002;
   // freshly placed pieces settle: a short drop and squash
@@ -1431,25 +1434,26 @@ function updateGhost() {
 const LINE_MAX = 4000;
 const lineGeo = new THREE.BufferGeometry(); lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(LINE_MAX * 6), 3).setUsage(THREE.DynamicDrawUsage)); lineGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(LINE_MAX * 6), 3).setUsage(THREE.DynamicDrawUsage));
 const lines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true, opacity: 0.95 })); lines.renderOrder = 50; lines.frustumCulled = false; lines.visible = false; site.add(lines);
+// Hoisted colors to avoid allocations when lines are visible
+const _lineWhite = new THREE.Color(0x1e3a5f), _lineBlue = new THREE.Color(0x4fb3ff);
 function drawLines(sim) {
   const pos = lineGeo.attributes.position.array, col = lineGeo.attributes.color.array; let n = 0;
   const seg = (ax, ay, az, bx, by, bz, c) => { if (n >= LINE_MAX) return; pos.set([ax, ay, az, bx, by, bz], n * 6); col.set([c.r, c.g, c.b, c.r, c.g, c.b], n * 6); n++; };
   const arrow = (x, y, z, dx, dz, len, c) => { const ex = x + dx * len, ez = z + dz * len; seg(x, y, z, ex, y, ez, c); const px = -dz, pz = dx; seg(ex, y, ez, ex - dx * 0.25 + px * 0.12, y, ez - dz * 0.25 + pz * 0.12, c); seg(ex, y, ez, ex - dx * 0.25 - px * 0.12, y, ez - dz * 0.25 - pz * 0.12, c); };
-  const white = new THREE.Color(0x1e3a5f), blue = new THREE.Color(0x4fb3ff);
   for (const p of G.pieces) {
     const r = sim.res.get(p); if (!r || !PT[p.t].support || r.N === undefined) continue;
-    const h = PT[p.t].h, x = cellX(G.L, p.x), z = cellZ(G.L, p.z); const H = Math.hypot(r.H[0], r.H[1]); stressTint(r.stress, _col); const c = _col.clone();
-    if (H > 0.05) arrow(x, h + 0.05, z, r.H[0] / H, r.H[1] / H, Math.min(2.2, 0.35 + H * 0.16), blue);
+    const h = PT[p.t].h, x = cellX(G.L, p.x), z = cellZ(G.L, p.z); const H = Math.hypot(r.H[0], r.H[1]); stressTint(r.stress, _col);
+    if (H > 0.05) arrow(x, h + 0.05, z, r.H[0] / H, r.H[1] / H, Math.min(2.2, 0.35 + H * 0.16), _lineBlue);
     // the thrust line inside the pier: eccentricity grows toward the base as the horizontal push works on a longer lever
     let px = x, pz = z, py = h; const steps = 8;
-    for (let i = 1; i <= steps; i++) { const y = h - h * i / steps; const Nhere = r.N - (PT[p.t].weight * (1 - i / steps)); const e = Math.min(1.2, H * (h - y) / Math.max(1, Nhere)); const qx = x + r.dir[0] * e, qz = z + r.dir[1] * e; seg(px, py, pz, qx, y, qz, c); px = qx; pz = qz; py = y; }
+    for (let i = 1; i <= steps; i++) { const y = h - h * i / steps; const Nhere = r.N - (PT[p.t].weight * (1 - i / steps)); const e = Math.min(1.2, H * (h - y) / Math.max(1, Nhere)); const qx = x + r.dir[0] * e, qz = z + r.dir[1] * e; seg(px, py, pz, qx, y, qz, _col); px = qx; pz = qz; py = y; }
     // the middle third of the base
-    const lim = r.limit; seg(x - r.dir[0] * lim, 0.03, z - r.dir[1] * lim, x + r.dir[0] * lim, 0.03, z + r.dir[1] * lim, white);
+    const lim = r.limit; seg(x - r.dir[0] * lim, 0.03, z - r.dir[1] * lim, x + r.dir[0] * lim, 0.03, z + r.dir[1] * lim, _lineWhite);
   }
   for (const p of G.pieces) if (p.t === 'dome' || p.t === 'half' || p.t === 'arch') { const r = sim.res.get(p); if (!r || r.status === 'fail' && r.reason !== 'support') continue; pieceOrigin(G.L, p, G.pieces, _v); const y = _v.y + 0.5;
-    if (p.t === 'arch') { const e = archEnds(p); for (const [ex, ez] of e) { const sx = cellX(G.L, ex), sz = cellZ(G.L, ez); const dx = sx - _v.x, dz = sz - _v.z; const l = Math.hypot(dx, dz); arrow(_v.x, y + 0.6, _v.z, dx / l, dz / l, l * 0.75, blue); } }
-    else if (p.t === 'dome') { for (const [cx, cz] of domePerimeter(p)) { if (!G.pieces.some(q => PT[q.t].support && q.x === cx && q.z === cz)) continue; const sx = cellX(G.L, cx), sz = cellZ(G.L, cz); const dx = sx - _v.x, dz = sz - _v.z; const l = Math.hypot(dx, dz) || 1; arrow(_v.x + dx * 0.25, y + 0.9, _v.z + dz * 0.25, dx / l, dz / l, l * 0.7, blue); } }
-    else { const hi = halfInfo(p); for (const [cx, cz] of hi.outer) { const sx = cellX(G.L, cx), sz = cellZ(G.L, cz); const dx = sx - _v.x, dz = sz - _v.z; const l = Math.hypot(dx, dz) || 1; arrow(_v.x, y + 0.5, _v.z, dx / l, dz / l, l * 0.9, blue); } arrow(_v.x, y + 0.5, _v.z, hi.dir[0], hi.dir[1], 0.8, blue); }
+    if (p.t === 'arch') { const e = archEnds(p); for (const [ex, ez] of e) { const sx = cellX(G.L, ex), sz = cellZ(G.L, ez); const dx = sx - _v.x, dz = sz - _v.z; const l = Math.hypot(dx, dz); arrow(_v.x, y + 0.6, _v.z, dx / l, dz / l, l * 0.75, _lineBlue); } }
+    else if (p.t === 'dome') { for (const [cx, cz] of domePerimeter(p)) { if (!G.pieces.some(q => PT[q.t].support && q.x === cx && q.z === cz)) continue; const sx = cellX(G.L, cx), sz = cellZ(G.L, cz); const dx = sx - _v.x, dz = sz - _v.z; const l = Math.hypot(dx, dz) || 1; arrow(_v.x + dx * 0.25, y + 0.9, _v.z + dz * 0.25, dx / l, dz / l, l * 0.7, _lineBlue); } }
+    else { const hi = halfInfo(p); for (const [cx, cz] of hi.outer) { const sx = cellX(G.L, cx), sz = cellZ(G.L, cz); const dx = sx - _v.x, dz = sz - _v.z; const l = Math.hypot(dx, dz) || 1; arrow(_v.x, y + 0.5, _v.z, dx / l, dz / l, l * 0.9, _lineBlue); } arrow(_v.x, y + 0.5, _v.z, hi.dir[0], hi.dir[1], 0.8, _lineBlue); }
   }
   lineGeo.setDrawRange(0, n * 2); lineGeo.attributes.position.needsUpdate = true; lineGeo.attributes.color.needsUpdate = true;
 }
