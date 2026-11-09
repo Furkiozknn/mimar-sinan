@@ -2808,7 +2808,26 @@ function predictGo(noPiece) { // also the "skip" path when G.pred.kind is null
   $('predict').hidden = true; G.pred = null; G.state = 'play'; if (G.ev) applyTints(G.ev.gravity); startTest(pred);
 }
 function stepTest(dt) {
-  const T = G.test; T.t += dt;
+  const T = G.test;
+  let simDt = dt;
+  if (T.phase === 'collapse' && T.t < 1.5) {
+    simDt *= 0.3;
+    if (T.t === 0) {
+      const activeSim = T.ev.gravity.failed ? T.ev.gravity : T.ev.quake;
+      const fails = topFailures(activeSim);
+      if (fails.length > 0) {
+        const p = fails[0];
+        pieceOrigin(G.L, p, G.pieces, _v);
+        T.camStartTarget = G.camTarget.clone();
+        T.camEndTarget = _v.clone();
+      }
+    }
+    if (T.camStartTarget && T.camEndTarget) {
+      const progress = Math.min(1, T.t / 1.5);
+      G.camTarget.lerpVectors(T.camStartTarget, T.camEndTarget, progress);
+    }
+  }
+  T.t += simDt;
   if (T.phase === 'lower') { scaffoldLower = Math.min(1, T.t / 0.9); poles.position.y = rails.position.y = -scaffoldLower * 9; if (scaffoldLower >= 1) { poles.visible = rails.visible = false; T.phase = 'gravity'; T.t = 0; applyTints(T.ev.gravity);
       if (T.ev.gravity.failed) { startCollapse(T.ev.gravity); T.phase = 'collapse'; T.why = 'rFell'; } else { toast(t('stands'), 'good'); T.phase = G.L.quake ? 'prequake' : 'done'; T.t = 0; } } return; }
   if (T.phase === 'prequake') { if (T.t > 0.8) { T.phase = 'quake'; T.t = 0; toast(t('quakeNow'), 'bad'); rumbleStart(3.6); } return; }
@@ -2868,6 +2887,7 @@ function finishTest() {
 }
 function retryLevel() { 
   const el = document.getElementById('collapseOverlay'); if (el && el.parentNode) el.parentNode.removeChild(el);
+  if (G.test) { G.test = null; }
   const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); 
 }
 function nextLevel() { if (G.li + 1 >= 15) showEnding(); else openBrief(G.li + 1); }
