@@ -1423,6 +1423,7 @@ input[type=range] {
     <label class="sl"><span data-t="effects"></span><input type="range" id="sSfx" min="0" max="1" step="0.05" aria-label="Efektler" data-tt="effects"></label>
     <div class="row"><span class="lbl" data-t="language"></span><div class="seg" id="segLang"><button data-v="tr">Türkçe</button><button data-v="en">English</button></div></div>
     <div class="row"><span class="lbl" data-t="quality"></span><div class="seg" id="segQ"><button data-v="low" data-t="low"></button><button data-v="high" data-t="high"></button></div></div>
+    <div class="row"><span class="lbl" data-t="colorblind"></span><div class="seg" id="segCB"><button data-v="false">Kapalı</button><button data-v="true">Açık</button></div></div>
     <div class="row"><span class="lbl" data-t="fullscreen"></span><button class="btn" id="bFull"><i data-icon="full"></i><span data-t="fullscreen"></span></button></div>
     <button class="btn w" id="bA11y"><span data-t="a11y"></span></button>
     <button class="btn primary w" id="bSetBack" style="margin-top:6px"><span data-t="back"></span></button>
@@ -1499,7 +1500,7 @@ const KEY = 'arena.mimar.';
 function load(k, def) { try { const v = localStorage.getItem(KEY + k); return v ? Object.assign(def, JSON.parse(v)) : def; } catch (e) { return def; } }
 function store(k, v) { if (FLAG.nosave || FLAG.auto) return; try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
 const isPhone = matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 820;
-const SET = load('settings', { master: 0.8, music: 0.6, sfx: 0.8, lang: /^tr/i.test(navigator.language || '') ? 'tr' : 'en', quality: isPhone ? 'low' : 'high', musicOn: true, sfxOn: true, stress: true });
+const SET = load('settings', { master: 0.8, music: 0.6, sfx: 0.8, lang: /^tr/i.test(navigator.language || '') ? 'tr' : 'en', quality: isPhone ? 'low' : 'high', musicOn: true, sfxOn: true, stress: true, colorblind: false });
 if (FLAG.lang === 'tr' || FLAG.lang === 'en') SET.lang = FLAG.lang;
 if (FLAG.low) SET.quality = 'low';
 const PROG = load('save', { stars: [], cur: 0, layouts: {} });
@@ -1529,6 +1530,7 @@ const I18N = {
     legendTitle: 'Gerilme', safe: 'güvenli', limit: 'sınır', legendKeys: '<kbd>V</kbd> basılı: itki çizgileri · <kbd>T</kbd> renkleri aç/kapa',
     pier: 'Ayak', wall: 'Duvar', buttress: 'Payanda', tower: 'Ağırlık kulesi', minaret: 'Minare', arch: 'Kemer', dome: 'Kubbe', half: 'Yarım kubbe',
     dome2: 'Kubbe 2', dome3: 'Kubbe 3', dome4: 'Kubbe 4', dome5: 'Kubbe 5', half3: 'Yarım kubbe 3', half4: 'Yarım kubbe 4', half5: 'Yarım kubbe 5',
+    colorblind: 'Renk körlüğü deseni',
     period0: 'Çırak', period1: 'Kalfa', period2: 'Usta', period0d: 'Duvar, ayak, kemer ve ilk kubbeler. Payandanın ve ağırlık kulesinin dersi.',
     period1d: 'Daha büyük kubbeler, minareler, yan galeriler ve ilk deprem.', period2d: 'Şehzade, Süleymaniye ve Selimiye: Sinan\'ın üç büyük dersi.',
     locked: 'Kilitli', reqCover: 'Harimi ört: {n} hücre açık', reqCoverOk: 'Harim örtüldü', reqDome: 'Kubbe en az {n} birim', reqDomeOk: 'Kubbe {n} birim',
@@ -1586,6 +1588,7 @@ const I18N = {
     legendTitle: 'Stress', safe: 'safe', limit: 'limit', legendKeys: 'hold <kbd>V</kbd>: thrust lines · <kbd>T</kbd> colours on/off',
     pier: 'Pier', wall: 'Wall', buttress: 'Buttress', tower: 'Weight tower', minaret: 'Minaret', arch: 'Arch', dome: 'Dome', half: 'Half-dome',
     dome2: 'Dome 2', dome3: 'Dome 3', dome4: 'Dome 4', dome5: 'Dome 5', half3: 'Half-dome 3', half4: 'Half-dome 4', half5: 'Half-dome 5',
+    colorblind: 'Colorblind pattern',
     period0: 'Apprentice', period1: 'Journeyman', period2: 'Master', period0d: 'Walls, piers, arches and the first domes. The lesson of the buttress and the weight tower.',
     period1d: 'Bigger domes, minarets, side galleries and the first earthquake.', period2d: 'Şehzade, Süleymaniye and Selimiye: Sinan\'s three great lessons.',
     locked: 'Locked', reqCover: 'Roof the hall: {n} cells open', reqCoverOk: 'Hall roofed', reqDome: 'Dome of at least {n} units', reqDomeOk: 'Dome of {n} units',
@@ -2116,6 +2119,16 @@ const hemi = new THREE.HemisphereLight(0xe3edf8, 0xb09a74, SKY.day.hemi); scene.
 const fill = new THREE.DirectionalLight(0xbfd4ff, 0.3); fill.position.set(12, 8, -14); scene.add(fill);
 // Canvas textures: running-bond ashlar for masonry (white base, vertex colours give the hue), mottled earth for the hill, streaks for the sea
 function makeTex(size, draw, repeat = 1) { const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); t.anisotropy = 4; return t; }
+const hatchTex = makeTex(64, (x, S) => {
+  x.fillStyle = '#ffffff'; x.fillRect(0, 0, S, S);
+  x.strokeStyle = 'rgba(0,0,0,0.4)'; x.lineWidth = 5;
+  x.beginPath(); for (let i = -S; i < S * 2; i += 12) { x.moveTo(i, 0); x.lineTo(i + S, S); } x.stroke();
+});
+const crossHatchTex = makeTex(64, (x, S) => {
+  x.fillStyle = '#ffffff'; x.fillRect(0, 0, S, S);
+  x.strokeStyle = 'rgba(0,0,0,0.5)'; x.lineWidth = 5;
+  x.beginPath(); for (let i = -S; i < S * 2; i += 12) { x.moveTo(i, 0); x.lineTo(i + S, S); x.moveTo(i, S); x.lineTo(i + S, 0); } x.stroke();
+});
 const stoneTex = makeTex(256, (x, S) => {
   x.fillStyle = '#ffffff'; x.fillRect(0, 0, S, S);
   const rows = 3, cols = 2, ch = S / rows, cw = S / cols;
@@ -2499,9 +2512,17 @@ function runSim() {
 function applyTints(sim, cracking) {
   for (const [p, m] of G.meshes) {
     const r = sim ? sim.res.get(p) : null;
-    if (!SET.stress || !r) { m.material.color.set(0xffffff); m.material.emissive.set(0); continue; }
+    if (!SET.stress || !r) { m.material.color.set(0xffffff); m.material.emissive.set(0); m.material.map = stoneTex; m.material.needsUpdate = true; continue; }
     // safe pieces keep their limestone; stressed ones warm up (a light tint plus an emissive glow, so lead domes do not turn brown)
-    const s = Math.min(1, r.stress), k = s >= 1 ? 1 : s * 0.7; stressTint(r.stress, _col); m.material.color.set(0xffffff).lerp(_col, 0.08 + 0.3 * k); m.material.emissive.copy(_col).multiplyScalar(0.03 + 0.28 * k);
+    const s = Math.min(1, r.stress), k = s >= 1 ? 1 : s * 0.7; stressTint(r.stress, _col);
+    m.material.color.set(0xffffff).lerp(_col, 0.08 + 0.3 * k);
+    m.material.emissive.copy(_col).multiplyScalar(0.03 + 0.28 * k);
+    if (SET.colorblind && s >= 0.6) {
+      m.material.map = s >= 0.9 ? crossHatchTex : hatchTex;
+    } else {
+      m.material.map = stoneTex;
+    }
+    m.material.needsUpdate = true;
   }
 }
 function addMesh(p) {
@@ -2759,6 +2780,20 @@ function startTest(pred = null) {
   G.test = { t: 0, phase: 'lower', quakeDone: false, ev: evaluate(G.L, G.pieces), pred: pred && (pred.kind === 'stands' || pred.kind === 'falls') ? { kind: pred.kind, piece: pred.kind === 'falls' && G.pieces.includes(pred.piece) ? pred.piece : null } : null };
   toast(t('testing'), 'info'); sfxCreak();
 }
+function displayCollapseOverlay(sim) {
+  const fails = topFailures(sim);
+  const primary = fails[0] ? (window.mimarSim && window.mimarSim.pieceName ? window.mimarSim.pieceName(fails[0]) : (fails[0].t + ' (' + fails[0].x + ',' + fails[0].z + ')')) : 'Structure';
+  const r = fails[0] ? sim.res.get(fails[0]) : null;
+  const metric = r ? (r.reason === 'thrust' ? 'thrust > resist' : r.reason === 'crush' ? 'stress > cap' : 'unsupported') : 'collapse';
+  window.simState = Object.assign({}, window.simState || {}, { primaryFailingPiece: primary, calculatedMetric: metric, lastSim: sim });
+  const div = document.createElement('div');
+  div.id = 'collapseOverlay';
+  div.style.cssText = 'position:fixed;inset:0;z-index:2147483999;display:flex;align-items:center;justify-content:center;background:rgba(15,32,53,0.75);backdrop-filter:blur(6px);color:#fff;font-family:var(--fd);font-size:20px;text-align:center;padding:20px;';
+  const tr = SET && SET.lang === 'tr';
+  div.innerHTML = `<div style="background:var(--bp);border:2px solid var(--gold);padding:24px 32px;border-radius:6px;box-shadow:var(--shadow-panel);"><h2 style="margin:0 0 10px;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;">${tr ? 'Simülasyon Çöküşü' : 'Simulation Collapse'}</h2><p style="margin:0;font-family:var(--fm);font-size:16px;">${primary} tipped: ${metric}</p></div>`;
+  document.body.appendChild(div);
+  setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 3000);
+}
 // Predict-then-test: the scaffold button first asks for an optional prediction
 const pieceLabel = p => `${pieceName(p)} (${p.x},${p.z})`;
 function openPredict() {
@@ -2794,7 +2829,26 @@ function predictGo(noPiece) { // also the "skip" path when G.pred.kind is null
   $('predict').hidden = true; G.pred = null; G.state = 'play'; if (G.ev) applyTints(G.ev.gravity); startTest(pred);
 }
 function stepTest(dt) {
-  const T = G.test; T.t += dt;
+  const T = G.test;
+  let simDt = dt;
+  if (T.phase === 'collapse' && T.t < 1.5) {
+    simDt *= 0.3;
+    if (T.t === 0) {
+      const activeSim = T.ev.gravity.failed ? T.ev.gravity : T.ev.quake;
+      const fails = topFailures(activeSim);
+      if (fails.length > 0) {
+        const p = fails[0];
+        pieceOrigin(G.L, p, G.pieces, _v);
+        T.camStartTarget = G.camTarget.clone();
+        T.camEndTarget = _v.clone();
+      }
+    }
+    if (T.camStartTarget && T.camEndTarget) {
+      const progress = Math.min(1, T.t / 1.5);
+      G.camTarget.lerpVectors(T.camStartTarget, T.camEndTarget, progress);
+    }
+  }
+  T.t += simDt;
   if (T.phase === 'lower') { scaffoldLower = Math.min(1, T.t / 0.9); poles.position.y = rails.position.y = -scaffoldLower * 9; if (scaffoldLower >= 1) { poles.visible = rails.visible = false; T.phase = 'gravity'; T.t = 0; applyTints(T.ev.gravity);
       if (T.ev.gravity.failed) { startCollapse(T.ev.gravity); T.phase = 'collapse'; T.why = 'rFell'; } else { toast(t('stands'), 'good'); T.phase = G.L.quake ? 'prequake' : 'done'; T.t = 0; } } return; }
   if (T.phase === 'prequake') { if (T.t > 0.8) { T.phase = 'quake'; T.t = 0; toast(t('quakeNow'), 'bad'); rumbleStart(3.6); } return; }
@@ -2802,7 +2856,13 @@ function stepTest(dt) {
     if (T.t > 1.6 && !T.qTinted) { T.qTinted = true; applyTints(T.ev.quake); }
     if (T.t > 2.2 && T.ev.quake.failed && !T.qCollapse) { T.qCollapse = true; startCollapse(T.ev.quake); T.phase = 'collapse'; T.why = 'rFellQuake'; site.position.set(0, 0, 0); return; }
     if (T.t >= 3.6) { site.position.set(0, 0, 0); T.phase = 'done'; T.t = 0; toast(t('survived'), 'good'); } return; }
-  if (T.phase === 'collapse') { const active = stepCollapse(dt); if (!active || T.t > 6) { T.phase = 'done'; T.t = 0; } return; }
+  if (T.phase === 'collapse') { 
+    if (T.t === dt || T.t < dt * 2) {
+      const activeSim = T.ev.gravity.failed ? T.ev.gravity : T.ev.quake;
+      if (activeSim) displayCollapseOverlay(activeSim);
+    }
+    const active = stepCollapse(dt); if (!active || T.t > 6) { T.phase = 'done'; T.t = 0; } return; 
+  }
   if (T.phase === 'done') { if (T.t > 0.9) finishTest(); }
 }
 function finishTest() {
@@ -2846,7 +2906,11 @@ function finishTest() {
   $('bNext').hidden = !complete || !!G.daily; $('bRShare').hidden = !complete; $('bRetry').innerHTML = `<i data-icon>${ICON.reset}</i><span>${t(complete ? 'retry' : 'rebuild')}</span>`;
   showOverlay('result'); G.camDist *= 1.05;
 }
-function retryLevel() { const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); }
+function retryLevel() { 
+  const el = document.getElementById('collapseOverlay'); if (el && el.parentNode) el.parentNode.removeChild(el);
+  if (G.test) { G.test = null; }
+  const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); 
+}
 function nextLevel() { if (G.li + 1 >= 15) showEnding(); else openBrief(G.li + 1); }
 function showEnding() {
   G.state = 'ending'; hudVisible(false); buildSkyline(15); site.position.set(0, 0, 0);
@@ -2866,6 +2930,7 @@ function openSettings(from) {
   G.settingsFrom = from; $('sMaster').value = SET.master; $('sMusic').value = SET.music; $('sSfx').value = SET.sfx;
   for (const b of $('segLang').children) b.classList.toggle('on', b.dataset.v === SET.lang);
   for (const b of $('segQ').children) b.classList.toggle('on', b.dataset.v === SET.quality);
+  for (const b of $('segCB').children) b.classList.toggle('on', b.dataset.v === String(SET.colorblind));
   showOverlay('settings');
 }
 function closeSettings() { saveSettings(); showOverlay(G.settingsFrom === 'pause' ? 'pause' : 'title'); if (G.settingsFrom === 'title') refreshTitle(); }
@@ -2889,6 +2954,8 @@ function applyTexts() {
   for (const el of document.querySelectorAll('[data-tt]')) { const val = t(el.dataset.tt); el.title = val; if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', val); }
   $('bLang').textContent = SET.lang.toUpperCase(); $('bLang2').textContent = SET.lang === 'tr' ? 'EN' : 'TR';
   $('legendKeys').innerHTML = t('legendKeys');
+  $('segCB').children[0].textContent = SET.lang === 'tr' ? 'Kapalı' : 'Off';
+  $('segCB').children[1].textContent = SET.lang === 'tr' ? 'Açık' : 'On';
   if (G.state === 'map') buildMap(); if (G.state === 'brief') openBrief(G.li); if (G.state === 'play' || G.state === 'predict') { buildTray(); refreshTray(); updateHud(); updateReqs(); } predictText();
   refreshTitle();
 }
@@ -3010,6 +3077,12 @@ on('bEMap', openMap); on('bEMenu', goTitle);
 $('sMaster').addEventListener('input', e => { SET.master = +e.target.value; applyVolumes(); }); $('sMusic').addEventListener('input', e => { SET.music = +e.target.value; applyVolumes(); }); $('sSfx').addEventListener('input', e => { SET.sfx = +e.target.value; applyVolumes(); });
 for (const b of $('segLang').children) b.addEventListener('click', () => setLang(b.dataset.v));
 for (const b of $('segQ').children) b.addEventListener('click', () => setQuality(b.dataset.v));
+for (const b of $('segCB').children) b.addEventListener('click', () => {
+  SET.colorblind = b.dataset.v === 'true';
+  saveSettings();
+  for (const btn of $('segCB').children) btn.classList.toggle('on', btn.dataset.v === String(SET.colorblind));
+  if (G.ev) applyTints(G.ev.gravity);
+});
 
 // ---------------------------------------------------------------------------
 // The bot (?auto): builds every reference solution through the same placement API, tests, moves on
