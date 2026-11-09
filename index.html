@@ -570,6 +570,13 @@ i[data-icon] svg { width: 100%; height: 100%; }
 .test:active { transform: translateY(1px); }
 .test:disabled { opacity: .5; cursor: default; transform: none; }
 .test i[data-icon] { width: 24px; height: 24px; color: var(--gold); }
+/* Predict-then-test panel: replaces the tray while the player makes a prediction */
+.predict { flex-direction: column; gap: 6px; }
+.predict .pq { font-family: var(--fd); font-size: 14px; color: var(--ink); text-align: center; }
+.predict .pq small { display: block; font-size: 11.5px; color: var(--ink3); font-family: inherit; }
+.predict .grp .btn.on { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+.rpred { margin: 0 0 8px; padding: 6px 8px; border-left: 3px solid var(--gold); background: rgba(201, 163, 74, 0.08); font-size: 13px; line-height: 1.4; }
+.rpred.bad { border-left-color: var(--ink3); background: rgba(56, 76, 102, 0.06); }
 
 /* ==========================================================================
    MODALS, PANELS & CONTROLS
@@ -973,6 +980,21 @@ input[type=range] {
   <div class="sep"></div>
   <div class="grp"><button class="test" id="bTest"><i data-icon="scaffold"></i><span data-t="test"></span></button></div>
 </div>
+<!-- Predict-then-test: optional prediction before the scaffolding comes down -->
+<div id="predict" class="tray glass predict" hidden role="group" aria-labelledby="pQ">
+  <div class="pq" id="pQ"></div>
+  <div class="grp" id="pAsk">
+    <button class="btn" id="bPStands"><i data-icon="check"></i><span data-t="pStands"></span></button>
+    <button class="btn" id="bPFalls"><i data-icon="cross"></i><span data-t="pFalls"></span></button>
+    <button class="btn" id="bPSkip"><i data-icon="scaffold"></i><span data-t="pSkip"></span></button>
+    <button class="btn" id="bPBack"><span data-t="back"></span></button>
+  </div>
+  <div class="grp" id="pPick" hidden>
+    <button class="btn primary" id="bPGo" disabled><i data-icon="scaffold"></i><span data-t="pTest"></span></button>
+    <button class="btn" id="bPNoPiece"><span data-t="pNoPiece"></span></button>
+    <button class="btn" id="bPBack2"><span data-t="back"></span></button>
+  </div>
+</div>
 
 <!-- Title -->
 <div id="title" class="overlay" role="dialog" aria-modal="true" aria-label="Mimar Sinan">
@@ -1056,6 +1078,7 @@ input[type=range] {
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
     <div class="rhead"><h2 class="serif" id="rTitle"></h2><div class="bigstars" id="rStars"></div></div>
     <p class="rec" id="rRec" hidden></p>
+    <p class="rpred" id="rPred" hidden></p>
     <p class="note" id="rNote" style="margin:0 0 8px"></p>
     <div class="starlist" id="rList"></div>
     <div class="kv" id="rKv"></div>
@@ -1121,6 +1144,13 @@ if (FLAG.low) SET.quality = 'low';
 const PROG = load('save', { stars: [], cur: 0, layouts: {} });
 const BEST = load('best', { stars: 0 });
 if (FLAG.auto || FLAG.nosave) { PROG.stars = []; PROG.cur = 0; PROG.layouts = {}; }
+// Predict-then-test mastery: its own key (prefix mimarsinan.), not saved in ?auto or ?nosave
+const MKEY = 'mimarsinan.mastery';
+const MASTERY = { pts: 0, n: 0, ok: 0, pieceOk: 0 };
+if (!FLAG.auto && !FLAG.nosave) { try { const v = JSON.parse(localStorage.getItem(MKEY) || 'null'); if (v) for (const k in MASTERY) MASTERY[k] = Math.max(0, Math.floor(Number(v[k]) || 0)); } catch (e) { /* private mode or bad JSON */ } }
+function saveMastery() { if (FLAG.nosave || FLAG.auto) return; try { localStorage.setItem(MKEY, JSON.stringify(MASTERY)); } catch (e) { /* private mode */ } }
+const PRED_PTS = { outcome: 10, piece: 15 }; // right stands/collapses call; bonus for naming the first piece to fail
+const masteryAcc = () => MASTERY.n ? Math.round(MASTERY.ok / MASTERY.n * 100) : 0;
 function saveSettings() { store('settings', SET); }
 function saveProg() { store('save', PROG); }
 
@@ -1156,6 +1186,12 @@ const I18N = {
     stressOn: 'Gerilme renkleri açık', stressOff: 'Gerilme renkleri kapalı', zoom: 'Yakınlaştırmak için tekerlek ya da iki parmak',
     unit: 'birim', pieces: 'Parçalar', patron: 'Sipariş veren', orbit: 'Sağ tık ya da boş alana sürükle: döndür',
     lesson: 'Sinan\'ın defteri',
+    predictQ: 'Tahmin et: iskele kalkınca yapı ne olacak?', predictSub: 'Doğru tahmin ustalık puanı getirir; ilk çöken parçayı da bilirsen bonus.',
+    pStands: 'Ayakta kalır', pFalls: 'Çöker', pSkip: 'Tahminsiz kaldır', pTest: 'Test et', pNoPiece: 'Parça seçmeden test et',
+    pPick: 'İlk çökecek parçaya tıkla', pPicked: 'Seçilen: {n}', pPickSub: 'Aynı parçaya yine tıklarsan arkasındaki seçilir.',
+    rPredStands: 'Tahminin: ayakta kalır', rPredFalls: 'Tahminin: çöker', rPredPiece: 'ilk çöken {n}', pRight: 'Doğru', pWrong: 'Yanlış',
+    pPieceRight: 'ilk çöken parçayı da bildin', pPieceWrong: 'ilk çöken: {n}',
+    pMastery: 'Ustalık +{p} · toplam {s} · isabet %{a}', pNoPred: 'Tahmin yapılmadı · ustalık {s}', masteryLine: 'Ustalık {s} · tahmin isabeti %{a} ({n} tahmin)',
     L: [
       ['Köy Mescidi', 'Kubbe dışa doğru iter. Alçak ve kalın duvarlar küçük bir kubbeyi taşır; dört köşeye duvar koy, kubbeyi üstüne oturt.'],
       ['Son Cemaat Revakı', 'Her kemer iki ucunu dışa iter. Sıradaki kemerler birbirini dengeler; uçtaki ayakları payanda tutar.'],
@@ -1202,6 +1238,12 @@ const I18N = {
     stressOn: 'Stress colours on', stressOff: 'Stress colours off', zoom: 'Wheel or pinch to zoom',
     unit: 'units', pieces: 'Pieces', patron: 'Patron', orbit: 'Right-drag or drag empty ground: orbit',
     lesson: 'Sinan\'s notebook',
+    predictQ: 'Predict: what will the building do when the scaffolding comes down?', predictSub: 'A right prediction earns mastery points; name the first piece to fail for a bonus.',
+    pStands: 'It stands', pFalls: 'It collapses', pSkip: 'Test without predicting', pTest: 'Test', pNoPiece: 'Test without picking a piece',
+    pPick: 'Click the piece that fails first', pPicked: 'Picked: {n}', pPickSub: 'Click the same piece again to pick the one behind it.',
+    rPredStands: 'Your prediction: it stands', rPredFalls: 'Your prediction: it collapses', rPredPiece: 'first to fail {n}', pRight: 'Right', pWrong: 'Wrong',
+    pPieceRight: 'you also named the first piece to fail', pPieceWrong: 'first to fail: {n}',
+    pMastery: 'Mastery +{p} · total {s} · accuracy {a}%', pNoPred: 'No prediction made · mastery {s}', masteryLine: 'Mastery {s} · prediction accuracy {a}% ({n} predictions)',
     L: [
       ['Village Mescit', 'A dome pushes outward. Low thick walls carry a small dome: a wall on each corner, the dome on top.'],
       ['The Portico', 'Every arch pushes its two ends outward. Arches in a row balance each other; the end piers need buttresses.'],
@@ -1600,6 +1642,17 @@ function evaluate(level, pieces) {
   const stars = complete ? [req.bestDome >= level.dome, left >= Math.round(level.budget * level.par), q ? Math.max(g.worst, q.worst) <= 0.9 : g.worst <= 0.8] : [false, false, false];
   return { req, gravity: g, quake: q, stands, quakeOk, used, left, complete, stars, starCount: stars.filter(Boolean).length };
 }
+// The simulation the test collapses with: gravity if it fails, else the earthquake if that fails, else none (the test's own order).
+function failingSim(ev) { return ev.gravity.failed ? ev.gravity : ev.quake && ev.quake.failed ? ev.quake : null; }
+// The pieces that fail first: the primary failures (not the ones that only lose their support) with the highest stress.
+// Ties all count. Read-only: it ranks what simulate() already decided.
+function topFailures(sim) {
+  if (!sim) return [];
+  let top = -Infinity, out = [];
+  for (const [p, r] of sim.res) { if (r.status !== 'fail' || r.reason === 'support') continue; if (r.stress > top + 1e-9) { top = r.stress; out = [p]; } else if (r.stress > top - 1e-9) out.push(p); }
+  return out;
+}
+const firstFailures = ev => topFailures(failingSim(ev));
 
 // ---------------------------------------------------------------------------
 // The 15 commissions. Each has a reference solution (ref) that the same simulation must pass; the hint shows its next piece.
@@ -2156,9 +2209,9 @@ function drawLines(sim) {
 // Collapse: cracks, then rigid bodies falling, debris and dust
 // ---------------------------------------------------------------------------
 function startCollapse(sim) {
-  const failing = G.pieces.filter(p => sim.res.get(p).status === 'fail');
+  const failing = G.pieces.filter(p => sim.res.get(p).status === 'fail'); const firsts = topFailures(sim);
   G.bodiesList = failing.map(p => { const m = G.meshes.get(p); const r = sim.res.get(p); const dir = r.dir && (r.dir[0] || r.dir[1]) ? r.dir : [Math.random() - 0.5, Math.random() - 0.5]; const l = Math.hypot(dir[0], dir[1]) || 1;
-    return { p, m, t: 0, phase: 'crack', base: m.position.clone(), dir: [dir[0] / l, dir[1] / l], v: new THREE.Vector3(), w: new THREE.Vector3(), settled: false, size: p.t === 'dome' ? p.s : p.t === 'half' ? p.s * 0.7 : p.t === 'minaret' ? 7 : PT[p.t].h || 1, grey: p.t === 'dome' || p.t === 'half' }; });
+    return { p, m, t: 0, phase: 'crack', base: m.position.clone(), dir: [dir[0] / l, dir[1] / l], v: new THREE.Vector3(), w: new THREE.Vector3(), settled: false, first: firsts.includes(p), size: p.t === 'dome' ? p.s : p.t === 'half' ? p.s * 0.7 : p.t === 'minaret' ? 7 : PT[p.t].h || 1, grey: p.t === 'dome' || p.t === 'half' }; });
   sfxCrack(); for (const b of G.bodiesList) puff(b.m.position.x, b.m.position.y + 0.5, b.m.position.z, 10, 1, 0.8);
 }
 function stepCollapse(dt) {
@@ -2166,7 +2219,7 @@ function stepCollapse(dt) {
   for (const b of G.bodiesList) {
     b.t += dt;
     if (b.phase === 'crack') { active = true; b.m.position.set(b.base.x + (Math.random() - 0.5) * 0.04, b.base.y, b.base.z + (Math.random() - 0.5) * 0.04); b.m.material.color.set(0x7a5a4a).lerp(STRESS_COL[2], 0.5 + Math.sin(b.t * 30) * 0.3);
-      if (b.t > 0.7 + Math.random() * 0.3) { b.phase = 'fall'; const support = PT[b.p.t].layer !== 'ground'; const k = support ? 0.6 : 1.4 + Math.min(2, b.size * 0.3); b.v.set(b.dir[0] * k, support ? -0.5 : 0.6, b.dir[1] * k); b.w.set(b.dir[1] * (support ? 0.8 : 2.2), (Math.random() - 0.5) * 0.6, -b.dir[0] * (support ? 0.8 : 2.2)); if (b.p.t === 'tower') { b.v.set(b.dir[0] * 1.5, 1.5, b.dir[1] * 1.5); } if (!support) { b.tip = 0; b.tipV = 0.25; b.axis = new THREE.Vector3(b.dir[1], 0, -b.dir[0]); } sfxThud(0.5, 60); } continue; }
+      if (b.t > (b.first ? 0.45 : 0.7 + Math.random() * 0.3)) { b.phase = 'fall'; const support = PT[b.p.t].layer !== 'ground'; const k = support ? 0.6 : 1.4 + Math.min(2, b.size * 0.3); b.v.set(b.dir[0] * k, support ? -0.5 : 0.6, b.dir[1] * k); b.w.set(b.dir[1] * (support ? 0.8 : 2.2), (Math.random() - 0.5) * 0.6, -b.dir[0] * (support ? 0.8 : 2.2)); if (b.p.t === 'tower') { b.v.set(b.dir[0] * 1.5, 1.5, b.dir[1] * 1.5); } if (!support) { b.tip = 0; b.tipV = 0.25; b.axis = new THREE.Vector3(b.dir[1], 0, -b.dir[0]); } sfxThud(0.5, 60); } continue; }
     if (b.settled) continue; active = true;
     // ground pieces tip over about their base edge in the direction of the thrust, like a felled tree
     if (b.tip !== undefined) {
@@ -2240,11 +2293,11 @@ addEventListener('keydown', e => {
     }
   }
 });
-function hudVisible(v) { $('hud').hidden = !v; $('tools').hidden = !v; $('reqs').hidden = !v; $('legend').hidden = !v; }
+function hudVisible(v) { $('predict').hidden = true; $('hud').hidden = !v; $('tools').hidden = !v; $('reqs').hidden = !v; $('legend').hidden = !v; }
 function goTitle() { G.state = 'title'; G.paused = false; hudVisible(false); showOverlay('title'); refreshTitle(); if (!G.L) { G.L = LEVELS[0]; drawGrid(G.L); placeProps(G.L); frameLevel(); } G.camDist = Math.max(G.camDist, 22); G.camPitch = 0.5; }
 function refreshTitle() {
   const n = PROG.stars.filter(s => s > 0).length, s = PROG.stars.reduce((a, b) => a + (b || 0), 0);
-  $('bestLine').textContent = n ? t('bestLine', { s, n }) : t('bestNone');
+  $('bestLine').textContent = (n ? t('bestLine', { s, n }) : t('bestNone')) + (MASTERY.n ? ' · ' + t('masteryLine', { s: MASTERY.pts, a: masteryAcc(), n: MASTERY.n }) : '');
   const cont = n > 0 && n < 15; $('bContinue').hidden = !cont; $('contInfo').textContent = cont ? t('contInfo', { n: firstUnsolved() + 1 }) : '';
 }
 function firstUnsolved() { for (let i = 0; i < 15; i++) if (!(PROG.stars[i] > 0)) return i; return 15; }
@@ -2286,16 +2339,52 @@ function openBrief(i) {
   drawGrid(G.L); placeProps(G.L); frameLevel(); clearPieces(); buildScaffold(G.L, []); clearDebris(); scaffoldLower = 0; poles.visible = rails.visible = true;
 }
 function beginPlay(restoreLayout) {
-  G.state = 'play'; G.paused = false; G.undo = []; G.hint = null; G.test = null; G.lastResult = null; clearDebris(); scaffoldLower = 0; poles.visible = rails.visible = true;
+  G.state = 'play'; G.paused = false; G.undo = []; G.hint = null; G.test = null; G.pred = null; $('predict').hidden = true; G.lastResult = null; clearDebris(); scaffoldLower = 0; poles.visible = rails.visible = true;
   const saved = restoreLayout || (PROG.layouts[G.li] && !FLAG.auto ? PROG.layouts[G.li] : null);
   setPieces(saved || []); G.sel = G.L.tray[0]; G.rot = 0; buildTray(); refreshTray(); hudVisible(true); showOverlay(null); updateHud(); updateReqs(); canvas.focus();
   if (G.li === 0 && !saved && !FLAG.auto) toast(t('orbit'), 'info');
 }
-function startTest() {
+// pred: null (no prediction) or { kind: 'stands' | 'falls', piece: a piece of G.pieces or null }
+function startTest(pred = null) {
   if (G.state !== 'play' || G.paused) return;
   if (!G.pieces.length) { toast(t('empty'), 'bad'); return; }
   G.testSnapshot = G.pieces.map(cloneP); G.state = 'test'; G.hint = null; ghost.visible = false; $('tools').hidden = true; $('reqs').hidden = true;
-  G.test = { t: 0, phase: 'lower', quakeDone: false, ev: evaluate(G.L, G.pieces) }; toast(t('testing'), 'info'); sfxCreak();
+  G.test = { t: 0, phase: 'lower', quakeDone: false, ev: evaluate(G.L, G.pieces), pred: pred && (pred.kind === 'stands' || pred.kind === 'falls') ? { kind: pred.kind, piece: pred.kind === 'falls' && G.pieces.includes(pred.piece) ? pred.piece : null } : null };
+  toast(t('testing'), 'info'); sfxCreak();
+}
+// Predict-then-test: the scaffold button first asks for an optional prediction
+const pieceLabel = p => `${pieceName(p)} (${p.x},${p.z})`;
+function openPredict() {
+  if (G.state !== 'play' || G.paused) return;
+  if (!G.pieces.length) { toast(t('empty'), 'bad'); return; }
+  G.state = 'predict'; G.pred = { kind: null, piece: null }; G.hint = null; G.hover = null; ghost.visible = false;
+  $('tools').hidden = true; $('predict').hidden = false; $('pAsk').hidden = false; $('pPick').hidden = true; predictText(); sfxClick(); $('bPStands').focus();
+}
+function predictText() {
+  if (!G.pred) return; const pick = G.pred.kind === 'falls';
+  $('pQ').innerHTML = pick ? `${t('pPick')}<small>${G.pred.piece ? t('pPicked', { n: pieceLabel(G.pred.piece) }) : t('pPickSub')}</small>` : `${t('predictQ')}<small>${t('predictSub')}</small>`;
+  $('bPGo').disabled = !G.pred.piece;
+}
+function predictBack() { if (G.state !== 'predict') return; $('predict').hidden = true; G.pred = null; G.state = 'play'; $('tools').hidden = false; if (G.ev) applyTints(G.ev.gravity); sfxClick(); canvas.focus(); }
+function predictChoose(kind) {
+  if (G.state !== 'predict') return; G.pred.kind = kind; G.pred.piece = null; sfxClick();
+  if (kind === 'falls') { $('pAsk').hidden = true; $('pPick').hidden = false; predictText(); return; }
+  predictGo();
+}
+function predictPick(p) {
+  G.pred.piece = p; if (G.ev) applyTints(G.ev.gravity);
+  const m = G.meshes.get(p); if (m) { m.material.color.set(0xffffff); m.material.emissive.set(0xc9a34a).multiplyScalar(0.55); }
+  predictText(); sfxClick();
+}
+function pickAt(cx, cy) { // ray against the piece meshes; clicking the picked piece again picks the next one behind it
+  const r = canvas.getBoundingClientRect(); ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera);
+  const seen = []; for (const h of ray.intersectObjects(pieceGroup.children, false)) { const p = h.object.userData.piece; if (p && !seen.includes(p)) seen.push(p); }
+  if (!seen.length) { toast(t('nothingHere')); return; }
+  predictPick(seen[(seen.indexOf(G.pred.piece) + 1) % seen.length]);
+}
+function predictGo(noPiece) { // also the "skip" path when G.pred.kind is null
+  if (G.state !== 'predict') return; const pred = G.pred && G.pred.kind ? { kind: G.pred.kind, piece: noPiece ? null : G.pred.piece } : null;
+  $('predict').hidden = true; G.pred = null; G.state = 'play'; if (G.ev) applyTints(G.ev.gravity); startTest(pred);
 }
 function stepTest(dt) {
   const T = G.test; T.t += dt;
@@ -2315,7 +2404,20 @@ function finishTest() {
   const prev = PROG.stars[G.li] || 0; let rec = false;
   if (complete) { if (ev.starCount > prev) { PROG.stars[G.li] = ev.starCount; rec = prev > 0; } PROG.layouts[G.li] = G.pieces.map(cloneP); PROG.cur = firstUnsolved(); saveProg();
     const total = PROG.stars.reduce((a, b) => a + (b || 0), 0); if (total > BEST.stars) { BEST.stars = total; store('best', BEST); } buildSkyline(G.li + 1); sfxChime(true); } else sfxChime(false);
-  G.lastResult = { fell, complete, stars: ev.stars, starCount: ev.starCount, ev, why: G.test.why };
+  // Predict-then-test: score the prediction against what the test did
+  const pr = G.test.pred, firsts = fell ? firstFailures(ev) : []; let pred = null;
+  if (pr) {
+    const right = (pr.kind === 'falls') === fell, pieceRight = right && fell && !!pr.piece && firsts.includes(pr.piece);
+    const pts = right ? PRED_PTS.outcome + (pieceRight ? PRED_PTS.piece : 0) : 0;
+    MASTERY.n++; if (right) MASTERY.ok++; if (pieceRight) MASTERY.pieceOk++; MASTERY.pts += pts; saveMastery();
+    pred = { kind: pr.kind, piece: pr.piece ? pieceLabel(pr.piece) : null, right, pieceRight, pts, first: firsts.map(pieceLabel) };
+  }
+  const rp = $('rPred'); rp.hidden = false; rp.classList.toggle('bad', !!pred && !pred.right);
+  if (pred) rp.innerHTML = `${t(pred.kind === 'stands' ? 'rPredStands' : 'rPredFalls')}${pred.piece ? ' · ' + t('rPredPiece', { n: pred.piece }) : ''}: <b>${t(pred.right ? 'pRight' : 'pWrong')}</b>`
+    + (fell && pred.right && pred.piece ? ' · ' + (pred.pieceRight ? t('pPieceRight') : t('pPieceWrong', { n: pred.first.slice(0, 2).join(', ') })) : fell && !pred.right ? ' · ' + t('pPieceWrong', { n: pred.first.slice(0, 2).join(', ') }) : '')
+    + `<br><b>${t('pMastery', { p: pred.pts, s: MASTERY.pts, a: masteryAcc() })}</b>`;
+  else rp.textContent = t('pNoPred', { s: MASTERY.pts });
+  G.lastResult = { fell, complete, stars: ev.stars, starCount: ev.starCount, ev, why: G.test.why, pred };
   $('rTitle').textContent = t(fell ? G.test.why : complete ? 'rStands' : 'rUnmet');
   $('rStars').innerHTML = complete ? starsHtml(ev.starCount, 'bigstars').replace('<span class="bigstars">', '').replace(/<\/span>$/, '') : '';
   $('rRec').hidden = !rec; $('rRec').textContent = t('newRecord');
@@ -2373,7 +2475,7 @@ function applyTexts() {
   for (const el of document.querySelectorAll('[data-tt]')) { const val = t(el.dataset.tt); el.title = val; if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', val); }
   $('bLang').textContent = SET.lang.toUpperCase(); $('bLang2').textContent = SET.lang === 'tr' ? 'EN' : 'TR';
   $('legendKeys').innerHTML = t('legendKeys');
-  if (G.state === 'map') buildMap(); if (G.state === 'brief') openBrief(G.li); if (G.state === 'play') { buildTray(); refreshTray(); updateHud(); updateReqs(); }
+  if (G.state === 'map') buildMap(); if (G.state === 'brief') openBrief(G.li); if (G.state === 'play' || G.state === 'predict') { buildTray(); refreshTray(); updateHud(); updateReqs(); } predictText();
   refreshTitle();
 }
 function setLang(l) { SET.lang = l; saveSettings(); applyTexts(); for (const b of $('segLang').children) b.classList.toggle('on', b.dataset.v === l); }
@@ -2435,6 +2537,7 @@ function cellFromEvent(cx, cy) {
 }
 const pointers = new Map(); let drag = null, pinch = null;
 function tapAt(cx, cy, button) {
+  if (G.state === 'predict') { if (G.pred && G.pred.kind === 'falls' && button === 0) pickAt(cx, cy); return; }
   if (G.state !== 'play' || G.paused) return; const c = cellFromEvent(cx, cy); if (!c) return;
   if (button === 2 || G.sel === 'erase') { const p = pieceAt(c[0], c[1]); if (p) removePiece(p); else toast(t('nothingHere')); return; }
   if (!G.sel) return; const spec = trayPiece(G.sel); const occupied = PT[spec.t].layer !== 'top' && pieceAt(c[0], c[1]);
@@ -2466,11 +2569,12 @@ canvas.addEventListener('wheel', e => { e.preventDefault(); G.camDist = Math.min
 addEventListener('keydown', e => {
   if (e.target && e.target.tagName === 'INPUT') return;
   const k = e.key.toLowerCase();
+  if (G.state === 'predict' && (k === 'p' || k === 'escape')) { predictBack(); e.preventDefault(); return; }
   if (k === 'p' || k === 'escape') { if (G.state === 'play' || G.state === 'test') { togglePause(); e.preventDefault(); } else if (G.state === 'settings') closeSettings(); return; }
   if (k === 'm') { toggleMusic(); return; } if (k === 'x') { toggleSfx(); return; } if (k === 'l') { setLang(SET.lang === 'tr' ? 'en' : 'tr'); return; } if (k === 'f') { toggleFullscreen(); return; }
   if (G.state !== 'play' || G.paused) return;
   if (k === 'r') rotateSel(); else if (k === 'delete' || k === 'backspace') { if (G.hover) { const p = pieceAt(G.hover[0], G.hover[1]); if (p) removePiece(p); } else selectTray('erase'); }
-  else if (k === ' ') { e.preventDefault(); startTest(); } else if (k === 't') toggleStress(); else if (k === 'v') G.showLines = true; else if (k === 'z') undo(); else if (k === 'h') showHint();
+  else if (k === ' ') { e.preventDefault(); openPredict(); } else if (k === 't') toggleStress(); else if (k === 'v') G.showLines = true; else if (k === 'z') undo(); else if (k === 'h') showHint();
   else if (k === 'e') selectTray('erase'); else if (/^[1-9]$/.test(k)) { const key = G.L.tray[+k - 1]; if (key) selectTray(key); }
 });
 addEventListener('keyup', e => { if (e.key.toLowerCase() === 'v') G.showLines = false; });
@@ -2480,7 +2584,9 @@ on('bPlay', () => { sfxClick(); openMap(); }); on('bContinue', () => { sfxClick(
 on('bSettings', () => openSettings('title')); on('bLang2', () => setLang(SET.lang === 'tr' ? 'en' : 'tr')); on('bLang', () => setLang(SET.lang === 'tr' ? 'en' : 'tr'));
 on('bMapBack', goTitle); on('bBrBack', openMap); on('bBegin', () => { sfxClick(); beginPlay(); });
 on('bHint', showHint); on('bUndo', undo); on('bStress', toggleStress); on('bPause', () => togglePause()); on('bSound', toggleSound);
-on('bRotate', rotateSel); on('bErase', () => selectTray(G.sel === 'erase' ? G.L.tray[0] : 'erase')); on('bTest', startTest);
+on('bRotate', rotateSel); on('bErase', () => selectTray(G.sel === 'erase' ? G.L.tray[0] : 'erase')); on('bTest', openPredict);
+on('bPStands', () => predictChoose('stands')); on('bPFalls', () => predictChoose('falls')); on('bPSkip', () => predictGo()); on('bPBack', predictBack); on('bPBack2', predictBack);
+on('bPGo', () => predictGo()); on('bPNoPiece', () => predictGo(true));
 on('bResume', () => togglePause(false)); on('bRestart', () => { G.paused = false; site.position.set(0, 0, 0); beginPlay([]); }); on('bPSettings', () => openSettings('pause')); on('bPMenu', () => { G.paused = false; if (AUD.ctx) AUD.ctx.resume(); site.position.set(0, 0, 0); goTitle(); });
 on('bSetBack', closeSettings); on('bFull', toggleFullscreen);
 on('bRMap', () => { site.position.set(0, 0, 0); openMap(); }); on('bRetry', retryLevel); on('bNext', nextLevel);
@@ -2504,7 +2610,7 @@ function botStep(dt) {
       if (G.paused) togglePause(false);
       const ref = G.L.ref;
       if (BOT.i < ref.length) { const r = ref[BOT.i++]; const ok = placePiece({ t: r.t, s: r.s }, r.x, r.z, r.r || 0, true); if (!ok) BOT.log.push({ level: G.li + 1, placeFailed: `${r.t}${r.s || ''}@${r.x},${r.z}` }); BOT.wait = FLAG.botDelay; }
-      else { startTest(); BOT.wait = 0.5; }
+      else { const ev = evaluate(G.L, G.pieces); startTest({ kind: failingSim(ev) ? 'falls' : 'stands', piece: firstFailures(ev)[0] || null }); BOT.wait = 0.5; } // predicts with the simulation
       break;
     }
     case 'result': {
@@ -2542,7 +2648,8 @@ function exportState() {
   Object.assign(window.mimar, {
     state: G.state, paused: G.paused, level: G.li + 1, levelId: G.L ? G.L.id : null, pieces: G.pieces.length, used: G.L ? stoneUsed(G.pieces) : 0, worst: G.ev ? Math.round(G.ev.gravity.worst * 100) / 100 : 0,
     complete: G.ev ? G.ev.complete : false, stars: PROG.stars.slice(), fps: DBG.fps, work: DBG.work, workMax: Math.round(DBG.workMax * 10) / 10, calls: DBG.calls, tris: DBG.tris, gpu: DBG.gpu,
-    bot: { on: BOT.on, done: BOT.done, levelsDone: BOT.levelsDone, log: BOT.log }, errors: window.__errs, assets: ASSETS, loaded: G.loaded, test: G.test ? G.test.phase : null, lastResult: G.lastResult ? { complete: G.lastResult.complete, fell: G.lastResult.fell, stars: G.lastResult.starCount } : null,
+    bot: { on: BOT.on, done: BOT.done, levelsDone: BOT.levelsDone, log: BOT.log }, errors: window.__errs, assets: ASSETS, loaded: G.loaded, test: G.test ? G.test.phase : null, lastResult: G.lastResult ? { complete: G.lastResult.complete, fell: G.lastResult.fell, stars: G.lastResult.starCount, pred: G.lastResult.pred } : null,
+    mastery: { ...MASTERY, acc: masteryAcc() },
   });
 }
 let last = performance.now();
@@ -2566,7 +2673,7 @@ function frame(now) {
 }
 window.mimar = {};
 window.mimarSim = (seconds) => { G.simming = true; const step = 1 / 30; for (let s = 0; s < seconds; s += step) tick(step); G.simming = false; exportState(); return window.mimar; };
-window.mimarDebug = { G, LEVELS, PT, BOT, simulate, evaluate, canPlace, placePiece, removePiece, startTest, openBrief, beginPlay, buildMap, showEnding, buildSkyline, paintSky, renderer, scene, camera, SET, PROG };
+window.mimarDebug = { G, LEVELS, PT, BOT, MASTERY, firstFailures, openPredict, predictChoose, predictPick, predictGo, simulate, evaluate, canPlace, placePiece, removePiece, startTest, openBrief, beginPlay, buildMap, showEnding, buildSkyline, paintSky, renderer, scene, camera, SET, PROG };
 
 // boot: texts, icons, verify the reference solutions one per task (also fills the loading counter)
 fillIcons(); $('logoBig').innerHTML = LOGO; document.querySelector('.logo-s').innerHTML = LOGO;
