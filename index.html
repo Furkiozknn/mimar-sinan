@@ -2706,6 +2706,20 @@ function startTest(pred = null) {
   G.test = { t: 0, phase: 'lower', quakeDone: false, ev: evaluate(G.L, G.pieces), pred: pred && (pred.kind === 'stands' || pred.kind === 'falls') ? { kind: pred.kind, piece: pred.kind === 'falls' && G.pieces.includes(pred.piece) ? pred.piece : null } : null };
   toast(t('testing'), 'info'); sfxCreak();
 }
+function displayCollapseOverlay(sim) {
+  const fails = topFailures(sim);
+  const primary = fails[0] ? (window.mimarSim && window.mimarSim.pieceName ? window.mimarSim.pieceName(fails[0]) : (fails[0].t + ' (' + fails[0].x + ',' + fails[0].z + ')')) : 'Structure';
+  const r = fails[0] ? sim.res.get(fails[0]) : null;
+  const metric = r ? (r.reason === 'thrust' ? 'thrust > resist' : r.reason === 'crush' ? 'stress > cap' : 'unsupported') : 'collapse';
+  window.simState = Object.assign({}, window.simState || {}, { primaryFailingPiece: primary, calculatedMetric: metric, lastSim: sim });
+  const div = document.createElement('div');
+  div.id = 'collapseOverlay';
+  div.style.cssText = 'position:fixed;inset:0;z-index:2147483999;display:flex;align-items:center;justify-content:center;background:rgba(15,32,53,0.75);backdrop-filter:blur(6px);color:#fff;font-family:var(--fd);font-size:20px;text-align:center;padding:20px;';
+  const tr = SET && SET.lang === 'tr';
+  div.innerHTML = `<div style="background:var(--bp);border:2px solid var(--gold);padding:24px 32px;border-radius:6px;box-shadow:var(--shadow-panel);"><h2 style="margin:0 0 10px;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;">${tr ? 'Simülasyon Çöküşü' : 'Simulation Collapse'}</h2><p style="margin:0;font-family:var(--fm);font-size:16px;">${primary} tipped: ${metric}</p></div>`;
+  document.body.appendChild(div);
+  setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 3000);
+}
 // Predict-then-test: the scaffold button first asks for an optional prediction
 const pieceLabel = p => `${pieceName(p)} (${p.x},${p.z})`;
 function openPredict() {
@@ -2749,7 +2763,13 @@ function stepTest(dt) {
     if (T.t > 1.6 && !T.qTinted) { T.qTinted = true; applyTints(T.ev.quake); }
     if (T.t > 2.2 && T.ev.quake.failed && !T.qCollapse) { T.qCollapse = true; startCollapse(T.ev.quake); T.phase = 'collapse'; T.why = 'rFellQuake'; site.position.set(0, 0, 0); return; }
     if (T.t >= 3.6) { site.position.set(0, 0, 0); T.phase = 'done'; T.t = 0; toast(t('survived'), 'good'); } return; }
-  if (T.phase === 'collapse') { const active = stepCollapse(dt); if (!active || T.t > 6) { T.phase = 'done'; T.t = 0; } return; }
+  if (T.phase === 'collapse') { 
+    if (T.t === dt || T.t < dt * 2) {
+      const activeSim = T.ev.gravity.failed ? T.ev.gravity : T.ev.quake;
+      if (activeSim) displayCollapseOverlay(activeSim);
+    }
+    const active = stepCollapse(dt); if (!active || T.t > 6) { T.phase = 'done'; T.t = 0; } return; 
+  }
   if (T.phase === 'done') { if (T.t > 0.9) finishTest(); }
 }
 function finishTest() {
@@ -2787,7 +2807,10 @@ function finishTest() {
   $('bNext').hidden = !complete; $('bRetry').innerHTML = `<i data-icon>${ICON.reset}</i><span>${t(complete ? 'retry' : 'rebuild')}</span>`;
   showOverlay('result'); G.camDist *= 1.05;
 }
-function retryLevel() { const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); }
+function retryLevel() { 
+  const el = document.getElementById('collapseOverlay'); if (el && el.parentNode) el.parentNode.removeChild(el);
+  const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); 
+}
 function nextLevel() { if (G.li + 1 >= 15) showEnding(); else openBrief(G.li + 1); }
 function showEnding() {
   G.state = 'ending'; hudVisible(false); buildSkyline(15); site.position.set(0, 0, 0);
