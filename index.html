@@ -1557,7 +1557,7 @@ const I18N = {
     stressOn: 'Gerilme renkleri açık', stressOff: 'Gerilme renkleri kapalı', zoom: 'Yakınlaştırmak için tekerlek ya da iki parmak',
     unit: 'birim', pieces: 'Parçalar', patron: 'Sipariş veren', orbit: 'Sağ tık ya da boş alana sürükle: döndür',
     lesson: 'Sinan\'ın defteri',
-    daily: 'Günün Meydan Okuması', dailyInfo: '(seri {s} · en iyi {b})', dailyDone: '(bugün tamam · seri {s})',
+    daily: 'Günün Meydan Okuması', dailyInfo: '({n}. {name} · seri {s} · en iyi {b})', dailyDone: '({n}. {name} · bugün tamam · seri {s})',
     dailyRes: 'Günün Meydan Okuması {d}: seri {s} gün · en iyi {b}', dailyFail: 'Günün Meydan Okuması {d}: tamamlanınca seri sayılır',
     share: 'Paylaş', another: 'Başka oyun', a11y: 'Erişilebilirlik',
     shareLevel: '{n}. {name}: {st} ({s}/3 yıldız)', shareTotal: 'Toplam {s}/45 yıldız', shareDaily: 'Günün Meydan Okuması {d} · seri {k}', shareEnd: '15 sipariş tamam: {s}/45 yıldız',
@@ -1614,7 +1614,7 @@ const I18N = {
     stressOn: 'Stress colours on', stressOff: 'Stress colours off', zoom: 'Wheel or pinch to zoom',
     unit: 'units', pieces: 'Pieces', patron: 'Patron', orbit: 'Right-drag or drag empty ground: orbit',
     lesson: 'Sinan\'s notebook',
-    daily: 'Daily challenge', dailyInfo: '(streak {s} · best {b})', dailyDone: '(done today · streak {s})',
+    daily: 'Daily challenge', dailyInfo: '({n}. {name} · streak {s} · best {b})', dailyDone: '({n}. {name} · done today · streak {s})',
     dailyRes: 'Daily challenge {d}: streak {s} · best {b}', dailyFail: 'Daily challenge {d}: the streak counts once it is complete',
     share: 'Share', another: 'Another game', a11y: 'Accessibility',
     shareLevel: '{n}. {name}: {st} ({s}/3 stars)', shareTotal: 'Total {s}/45 stars', shareDaily: 'Daily challenge {d} · streak {k}', shareEnd: 'All 15 commissions: {s}/45 stars',
@@ -2688,15 +2688,15 @@ function refreshTitle() {
   $('bestLine').textContent = (n ? t('bestLine', { s, n }) : t('bestNone')) + (MASTERY.n ? ' · ' + t('masteryLine', { s: MASTERY.pts, a: masteryAcc(), n: MASTERY.n }) : '');
   const cont = n > 0 && n < 15; $('bContinue').hidden = !cont; $('contInfo').textContent = cont ? t('contInfo', { n: firstUnsolved() + 1 }) : '';
   const d = dailyInfo(); $('bDaily').hidden = !d;
-  if (d) $('dailyInfo').textContent = t(d.done ? 'dailyDone' : 'dailyInfo', { n: d.li + 1, s: d.streak, b: d.best });
+  if (d) $('dailyInfo').textContent = t(d.done ? 'dailyDone' : 'dailyInfo', { n: d.li + 1, name: t('L')[d.li][0], s: d.streak, b: d.best });
 }
 // ---------------------------------------------------------------------------
 // arena-kit: daily challenge, share, badges
-// The commissions are fixed, so the day's seed picks "today's commission" out of all 15 (the hint button
-// still walks through any of them). A daily run starts empty and does not touch the campaign save.
+// The commissions are fixed, so the day's seed picks "today's commission" out of the ones the player has
+// already unlocked on the period map (same day + same progress = same commission; the hint button still walks through any of them). A daily run starts empty and does not touch the campaign save.
 // ---------------------------------------------------------------------------
 const ARENA_URL = 'https://furkiozknn.github.io/mimar-sinan/';
-function dailyInfo() { if (!window.Arena) return null; const d = Arena.daily(); d.li = d.seed % LEVELS.length; return d; }
+function dailyInfo() { if (!window.Arena) return null; const d = Arena.daily(), open = []; for (let i = 0; i < LEVELS.length; i++) if (levelOpen(i)) open.push(i); d.li = open[d.seed % open.length]; return d; }
 const dayText = d => String(d).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
 function startDaily() {
   const d = dailyInfo(); if (!d) return;
@@ -2720,15 +2720,18 @@ function arenaAward(id, key) { if (window.Arena && !FLAG.auto && !FLAG.nosave) A
 function firstUnsolved() { for (let i = 0; i < 15; i++) if (!(PROG.stars[i] > 0)) return i; return 15; }
 function openMap() { G.daily = null; G.state = 'map'; hudVisible(false); buildMap(); showOverlay('map'); }
 function starsHtml(n, cls = 'stars') { let h = `<span class="${cls}">`; for (let i = 0; i < 3; i++) h += ICON.star.replace('<svg', `<svg class="${i < n ? 'on' : ''}"`); return h + '</span>'; }
+// same rule as the period map: a period opens when all but one order before it has a star; inside it, an order opens after the previous one
+function periodOpen(p) { const from = p * 5; return p === 0 || PROG.stars.slice(0, from).filter(s => s > 0).length >= from - 1; }
+function levelOpen(i, nxt = firstUnsolved()) { return periodOpen(Math.floor(i / 5)) && (i === 0 || PROG.stars[i - 1] > 0 || PROG.stars[i] > 0 || i === nxt); }
 function buildMap() {
   const root = $('pcards'); root.innerHTML = ''; const nxt = firstUnsolved();
   for (let p = 0; p < 3; p++) {
-    const from = p * 5; const unlocked = p === 0 || PROG.stars.slice(0, from).filter(s => s > 0).length >= from - 1;
+    const from = p * 5; const unlocked = periodOpen(p);
     const card = document.createElement('div'); card.className = 'pc' + (unlocked ? '' : ' locked');
     card.innerHTML = `<h3 class="serif">${p + 1}. ${t('period' + p)}</h3><p>${t('period' + p + 'd')}</p><div class="lv5"></div>`;
     const grid = card.querySelector('.lv5');
     for (let i = from; i < from + 5; i++) {
-      const b = document.createElement('button'); const st = PROG.stars[i] || 0; const open = unlocked && (i === 0 || (PROG.stars[i - 1] > 0) || st > 0 || i === nxt);
+      const b = document.createElement('button'); const st = PROG.stars[i] || 0; const open = levelOpen(i, nxt);
       b.disabled = !open; b.className = st ? 'done' : i === nxt ? 'next' : ''; b.innerHTML = `<span><small>${i + 1}</small>${t('L')[i][0]}</span>${starsHtml(st)}`;
       b.addEventListener('click', () => { bootAudio(); sfxClick(); openBrief(i); }); grid.appendChild(b);
     }
