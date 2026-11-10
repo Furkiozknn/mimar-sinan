@@ -921,7 +921,10 @@ input[type=range] {
   .test { min-height: 48px; padding: 0 14px; font-size: 13.5px; }
   .test span { display: none; }
   .tray { gap: 4px; padding: 6px 8px; }
+  /* the stress legend sat under the piece tray at the bottom right (390 px: 81 px overlap); it moves up, under the HUD */
+  .legend { top: calc(216px + var(--sa-t)); bottom: auto; width: 136px; padding: 6px 10px; }
 }
+@media (max-width: 760px) and (pointer: coarse) { .legend .keys { display: none; } } /* V / T keyboard help: no keys on a touch phone */
 @media (max-height: 500px) {
   .legend { display: none; }
   .tray { flex-wrap: nowrap; gap: 4px; padding: 4px 6px; bottom: calc(4px + var(--sa-b)); max-width: calc(100vw - 12px); }
@@ -1328,11 +1331,12 @@ input[type=range] {
     <button class="ibtn" id="bLang" data-tt="language" aria-label="Dil">TR</button>
   </div>
 </div>
-<div class="notes"><div id="reqs" class="reqs" hidden></div><div id="toasts" class="toasts"></div></div>
+<div class="notes"><div id="reqs" class="reqs" hidden></div><div id="toasts" class="toasts" role="status" aria-live="polite"></div></div>
 <div id="legend" class="legend glass" hidden>
   <div data-t="legendTitle"></div>
   <div class="bar"></div>
   <div class="lbl"><span data-t="safe"></span><span data-t="limit"></span></div>
+  <div class="lbl" aria-hidden="true"><span>! ≥80%</span><span>× 100%</span></div>
   <div class="keys" id="legendKeys"></div>
 </div>
 <div id="tools" class="tray glass" hidden>
@@ -1509,6 +1513,8 @@ const KEY = 'arena.mimar.';
 function load(k, def) { try { const v = localStorage.getItem(KEY + k); return v ? Object.assign(def, JSON.parse(v)) : def; } catch (e) { return def; } }
 function store(k, v) { if (FLAG.nosave || FLAG.auto) return; try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
 const isPhone = matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 820;
+/** arena-kit "reduce motion": no camera shake, the site does not sway in the earthquake. Read live (visual layer only, the sim never reads it). */
+const calm = () => !!(window.Arena && Arena.settings && Arena.settings.reducedMotion);
 const SET = load('settings', { master: 0.8, music: 0.6, sfx: 0.8, lang: /^tr/i.test(navigator.language || '') ? 'tr' : 'en', quality: isPhone ? 'low' : 'high', musicOn: true, sfxOn: true, stress: true });
 if (FLAG.lang === 'tr' || FLAG.lang === 'en') SET.lang = FLAG.lang;
 if (FLAG.low) SET.quality = 'low';
@@ -1555,7 +1561,7 @@ const I18N = {
     endTitle: 'Mimarbaşı oldun', endSub: 'On beş sipariş, üç dönem. Tepedeki silüet senin eserin: güneş batarken bütün kubbeler kurşun grisi parlıyor.',
     musicOn: 'Müzik açık', musicOff: 'Müzik kapalı', sfxOn: 'Efektler açık', sfxOff: 'Efektler kapalı', soundOn: 'Ses açık', soundOff: 'Ses kapalı',
     stressOn: 'Gerilme renkleri açık', stressOff: 'Gerilme renkleri kapalı', zoom: 'Yakınlaştırmak için tekerlek ya da iki parmak',
-    unit: 'birim', pieces: 'Parçalar', patron: 'Sipariş veren', orbit: 'Sağ tık ya da boş alana sürükle: döndür',
+    unit: 'birim', pieces: 'Parçalar', patron: 'Sipariş veren', orbit: 'Sağ tık ya da boş alana sürükle: döndür', orbitTouch: 'Boş alanda parmağını sürükle: döndür · iki parmak: yakınlaştır',
     lesson: 'Sinan\'ın defteri',
     daily: 'Günün Meydan Okuması', dailyInfo: '({n}. {name} · seri {s} · en iyi {b})', dailyDone: '({n}. {name} · bugün tamam · seri {s})',
     dailyRes: 'Günün Meydan Okuması {d}: seri {s} gün · en iyi {b}', dailyFail: 'Günün Meydan Okuması {d}: tamamlanınca seri sayılır',
@@ -1612,7 +1618,7 @@ const I18N = {
     endTitle: 'You are the chief architect', endSub: 'Fifteen commissions, three periods. The skyline on the hill is your work: at sunset every dome glows lead-grey.',
     musicOn: 'Music on', musicOff: 'Music off', sfxOn: 'Effects on', sfxOff: 'Effects off', soundOn: 'Sound on', soundOff: 'Sound off',
     stressOn: 'Stress colours on', stressOff: 'Stress colours off', zoom: 'Wheel or pinch to zoom',
-    unit: 'units', pieces: 'Pieces', patron: 'Patron', orbit: 'Right-drag or drag empty ground: orbit',
+    unit: 'units', pieces: 'Pieces', patron: 'Patron', orbit: 'Right-drag or drag empty ground: orbit', orbitTouch: 'Drag empty ground: orbit · two fingers: zoom',
     lesson: 'Sinan\'s notebook',
     daily: 'Daily challenge', dailyInfo: '({n}. {name} · streak {s} · best {b})', dailyDone: '({n}. {name} · done today · streak {s})',
     dailyRes: 'Daily challenge {d}: streak {s} · best {b}', dailyFail: 'Daily challenge {d}: the streak counts once it is complete',
@@ -2513,6 +2519,29 @@ function applyTints(sim, cracking) {
     // safe pieces keep their limestone; stressed ones warm up (a light tint plus an emissive glow, so lead domes do not turn brown)
     const s = Math.min(1, r.stress), k = s >= 1 ? 1 : s * 0.7; stressTint(r.stress, _col); m.material.color.set(0xffffff).lerp(_col, 0.08 + 0.3 * k); m.material.emissive.copy(_col).multiplyScalar(0.03 + 0.28 * k);
   }
+  for (const [p, m] of G.meshes) { const r = SET.stress && sim ? sim.res.get(p) : null; stressMark(m, r ? r.stress : 0); }
+}
+// Colour-blind second channel next to the tint: a symbol over a stressed piece. '!' from 80 % (past the safety margin
+// of the stars), 'x' at 100 % (it fails). Drawing only: the sim and the tint are unchanged; follows the "stress colours" switch.
+function stressMarkMat(kind) {
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  g.beginPath(); g.arc(32, 32, 27, 0, Math.PI * 2); g.fillStyle = kind === 'fail' ? '#7a1d14' : '#1b3759'; g.fill(); g.lineWidth = 4; g.strokeStyle = '#fff'; g.stroke();
+  g.strokeStyle = '#fff'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath();
+  if (kind === 'fail') { g.moveTo(22, 22); g.lineTo(42, 42); g.moveTo(42, 22); g.lineTo(22, 42); } else { g.moveTo(32, 16); g.lineTo(32, 35); g.moveTo(32, 46); g.lineTo(32, 46.5); }
+  g.stroke();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({ map: t, depthTest: false, depthWrite: false, fog: false, toneMapped: false }); mat.userData.kind = kind; return mat;
+}
+const STRESS_MARK = { limit: stressMarkMat('limit'), fail: stressMarkMat('fail') };
+function stressMark(m, stress) {
+  const kind = stress >= 1 ? 'fail' : stress >= 0.8 ? 'limit' : null; let sp = m.userData.mark;
+  if (!kind) { if (sp) sp.visible = false; return; }
+  if (!sp) {
+    if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); const b = m.geometry.boundingBox;
+    sp = new THREE.Sprite(STRESS_MARK[kind]); sp.name = 'stressMark'; sp.renderOrder = 5; sp.scale.set(0.55, 0.55, 1);
+    sp.position.set((b.min.x + b.max.x) / 2, b.max.y + 0.4, (b.min.z + b.max.z) / 2); m.add(sp); m.userData.mark = sp;
+  }
+  sp.material = STRESS_MARK[kind]; sp.visible = true;
 }
 function addMesh(p) {
   const m = new THREE.Mesh(buildGeo(p), new THREE.MeshLambertMaterial({ vertexColors: true, map: stoneTex })); m.castShadow = m.receiveShadow = true; m.userData.piece = p; m.userData.born = G.time; m.userData.settled = G.simming || G.state !== 'play';
@@ -2608,12 +2637,12 @@ function stepCollapse(dt) {
     if (b.tip !== undefined) {
       b.tipV += dt * 3.2 * (0.35 + Math.sin(b.tip)); b.tip = Math.min(Math.PI / 2, b.tip + b.tipV * dt);
       const c = Math.cos(b.tip), s = Math.sin(b.tip); b.m.position.set(b.base.x + b.dir[0] * 0.5 * (1 - c), b.base.y + 0.5 * s, b.base.z + b.dir[1] * 0.5 * (1 - c)); b.m.quaternion.setFromAxisAngle(b.axis, b.tip);
-      if (b.tip >= Math.PI / 2) { b.settled = true; if (!b.hit) { b.hit = true; const len = Math.min(3, b.size * 0.5); sfxThud(0.7, 45); scatter(b.base.x + b.dir[0] * len, 0.2, b.base.z + b.dir[1] * len, Math.min(30, 6 + b.size * 5), b.grey); puff(b.base.x + b.dir[0] * len, 0.2, b.base.z + b.dir[1] * len, 24, 1.2 + b.size * 0.3, 1.4); G.shake = Math.max(G.shake, 0.25); } }
+      if (b.tip >= Math.PI / 2) { b.settled = true; if (!b.hit) { b.hit = true; const len = Math.min(3, b.size * 0.5); sfxThud(0.7, 45); scatter(b.base.x + b.dir[0] * len, 0.2, b.base.z + b.dir[1] * len, Math.min(30, 6 + b.size * 5), b.grey); puff(b.base.x + b.dir[0] * len, 0.2, b.base.z + b.dir[1] * len, 24, 1.2 + b.size * 0.3, 1.4); if (!calm()) G.shake = Math.max(G.shake, 0.25); } }
       continue;
     }
     b.v.y -= 11 * dt; b.m.position.addScaledVector(b.v, dt); b.m.rotation.x += b.w.x * dt; b.m.rotation.y += b.w.y * dt; b.m.rotation.z += b.w.z * dt;
     const rest = Math.min(0.5, b.size * 0.25);
-    if (b.m.position.y < rest) { b.m.position.y = rest; if (!b.hit) { b.hit = true; sfxThud(0.7, 45); scatter(b.m.position.x, 0.2, b.m.position.z, Math.min(30, 6 + b.size * 5), b.grey); puff(b.m.position.x, 0.2, b.m.position.z, 24, 1.6 + b.size * 0.4, 1.4); G.shake = Math.max(G.shake, 0.25); }
+    if (b.m.position.y < rest) { b.m.position.y = rest; if (!b.hit) { b.hit = true; sfxThud(0.7, 45); scatter(b.m.position.x, 0.2, b.m.position.z, Math.min(30, 6 + b.size * 5), b.grey); puff(b.m.position.x, 0.2, b.m.position.z, 24, 1.6 + b.size * 0.4, 1.4); if (!calm()) G.shake = Math.max(G.shake, 0.25); }
       b.v.y *= -0.2; b.v.x *= 0.5; b.v.z *= 0.5; b.w.multiplyScalar(0.45); b.m.rotation.x *= 0.9; b.m.rotation.z *= 0.9; if (Math.abs(b.v.y) < 0.6 && b.v.lengthSq() < 0.3) { b.settled = true; b.v.set(0, 0, 0); } }
   }
   return active;
@@ -2646,7 +2675,7 @@ function updateCamera(dt) {
   if (G.state === 'result' || G.state === 'ending') G.camYaw += dt * (G.state === 'ending' ? 0.12 : 0.22);
   const d = G.camDist, y = G.camPitch; const cx = Math.sin(G.camYaw) * Math.cos(y) * d, cz = Math.cos(G.camYaw) * Math.cos(y) * d, cy = Math.sin(y) * d;
   camera.position.set(G.camTarget.x + cx, G.camTarget.y + cy, G.camTarget.z + cz);
-  if (G.shake > 0) { G.shake = Math.max(0, G.shake - dt * 0.8); const s = G.shake * 0.25; camera.position.x += (Math.random() - 0.5) * s; camera.position.y += (Math.random() - 0.5) * s; }
+  if (G.shake > 0) { G.shake = Math.max(0, G.shake - dt * 0.8); const s = calm() ? 0 : G.shake * 0.25; camera.position.x += (Math.random() - 0.5) * s; camera.position.y += (Math.random() - 0.5) * s; }
   camera.lookAt(G.camTarget);
 }
 function frameLevel() { const M = Math.max(G.L.grid[0], G.L.grid[1]); G.camDist = M * 1.35 + 8 + (innerWidth < innerHeight ? M * 0.8 : 0); G.camTarget.set(0, 1.2, 0); G.camYaw = -0.7; G.camPitch = 0.62; const s = M / 2 + 4; sun.shadow.camera.left = -s; sun.shadow.camera.right = s; sun.shadow.camera.top = s; sun.shadow.camera.bottom = -s; sun.shadow.camera.updateProjectionMatrix(); }
@@ -2656,6 +2685,7 @@ addEventListener('resize', onResize);
 // setting (on by default, as before). On return the pause menu stays open, as before, until the player resumes.
 const autoPause = () => { if (G.state === 'play' && !G.paused) togglePause(true); };
 if (window.Arena) Arena.on('pause', autoPause);
+if (window.Arena) Arena.on('settings', () => { if (calm()) G.shake = 0; }); // "reduce motion" switched on mid-test: stop a running shake now
 document.addEventListener('visibilitychange', () => { G.hidden = document.hidden; if (G.hidden && !window.Arena) autoPause(); if (AUD.ctx) { if (G.hidden) AUD.ctx.suspend(); else if (!G.paused) AUD.ctx.resume(); } });
 
 // ---------------------------------------------------------------------------
@@ -2762,7 +2792,7 @@ function beginPlay(restoreLayout) {
   G.state = 'play'; G.paused = false; G.undo = []; G.hint = null; G.test = null; G.pred = null; $('predict').hidden = true; G.lastResult = null; clearDebris(); scaffoldLower = 0; poles.visible = rails.visible = true;
   const saved = restoreLayout || (PROG.layouts[G.li] && !FLAG.auto ? PROG.layouts[G.li] : null);
   setPieces(saved || []); G.sel = G.L.tray[0]; G.rot = 0; buildTray(); refreshTray(); hudVisible(true); showOverlay(null); updateHud(); updateReqs(); canvas.focus();
-  if (G.li === 0 && !saved && !FLAG.auto) toast(t('orbit'), 'info');
+  if (G.li === 0 && !saved && !FLAG.auto) toast(t(matchMedia('(pointer: coarse)').matches ? 'orbitTouch' : 'orbit'), 'info'); // touch: no right-click
 }
 // pred: null (no prediction) or { kind: 'stands' | 'falls', piece: a piece of G.pieces or null }
 function startTest(pred = null) {
@@ -2811,7 +2841,7 @@ function stepTest(dt) {
   if (T.phase === 'lower') { scaffoldLower = Math.min(1, T.t / 0.9); poles.position.y = rails.position.y = -scaffoldLower * 9; if (scaffoldLower >= 1) { poles.visible = rails.visible = false; T.phase = 'gravity'; T.t = 0; applyTints(T.ev.gravity);
       if (T.ev.gravity.failed) { startCollapse(T.ev.gravity); T.phase = 'collapse'; T.why = 'rFell'; } else { toast(t('stands'), 'good'); T.phase = G.L.quake ? 'prequake' : 'done'; T.t = 0; } } return; }
   if (T.phase === 'prequake') { if (T.t > 0.8) { T.phase = 'quake'; T.t = 0; toast(t('quakeNow'), 'bad'); rumbleStart(3.6); } return; }
-  if (T.phase === 'quake') { const k = Math.min(1, T.t / 0.5) * (1 - smooth(2.9, 3.5, T.t)); const a = G.L.quake * 0.9; site.position.x = Math.sin(T.t * 31) * a * k * 0.6 + Math.sin(T.t * 13) * a * k * 0.3; site.position.z = Math.cos(T.t * 27) * a * k * 0.4; G.shake = Math.max(G.shake, 0.35 * k); if (T.t > 1 && Math.random() < 0.3) puff((Math.random() - 0.5) * G.L.grid[0], 0.1, (Math.random() - 0.5) * G.L.grid[1], 2, 0.5, 0.4);
+  if (T.phase === 'quake') { const k = Math.min(1, T.t / 0.5) * (1 - smooth(2.9, 3.5, T.t)); const a = calm() ? 0 : G.L.quake * 0.9; site.position.x = Math.sin(T.t * 31) * a * k * 0.6 + Math.sin(T.t * 13) * a * k * 0.3; site.position.z = Math.cos(T.t * 27) * a * k * 0.4; if (a) G.shake = Math.max(G.shake, 0.35 * k); if (T.t > 1 && Math.random() < 0.3) puff((Math.random() - 0.5) * G.L.grid[0], 0.1, (Math.random() - 0.5) * G.L.grid[1], 2, 0.5, 0.4);
     if (T.t > 1.6 && !T.qTinted) { T.qTinted = true; applyTints(T.ev.quake); }
     if (T.t > 2.2 && T.ev.quake.failed && !T.qCollapse) { T.qCollapse = true; startCollapse(T.ev.quake); T.phase = 'collapse'; T.why = 'rFellQuake'; site.position.set(0, 0, 0); return; }
     if (T.t >= 3.6) { site.position.set(0, 0, 0); T.phase = 'done'; T.t = 0; toast(t('survived'), 'good'); } return; }
