@@ -897,6 +897,151 @@ input[type=range] {
 #dbg .err { color: #f66; }
 
 /* ==========================================================================
+   MOBILE TOUCH RADIAL THUMB MENU
+   ========================================================================== */
+#bRadial { display: none; }
+.radial-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 28;
+  pointer-events: none;
+}
+.radial-wrap:not([hidden]) {
+  display: block;
+}
+.radial-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 32, 53, 0.26);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.16s ease-out;
+}
+.radial-wrap.open .radial-backdrop {
+  opacity: 1;
+}
+.radial-hub {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0);
+}
+.radial-ring {
+  position: absolute;
+  left: -74px;
+  top: -74px;
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(27, 55, 89, 0.35);
+  pointer-events: none;
+  box-sizing: border-box;
+  opacity: 0.85;
+}
+.radial-center {
+  position: absolute;
+  left: -20px;
+  top: -20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bp);
+  color: var(--gold-light);
+  border: 1.5px solid var(--gold);
+  box-shadow: 0 4px 14px rgba(15, 32, 53, 0.4), 0 0 10px var(--gold-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.15s ease, background 0.15s ease;
+  z-index: 2;
+  -webkit-tap-highlight-color: transparent;
+}
+.radial-center:hover, .radial-center:focus-visible {
+  background: var(--accent);
+  transform: scale(1.08);
+}
+.radial-center:active {
+  transform: scale(0.92);
+}
+.radial-center i[data-icon] {
+  width: 20px;
+  height: 20px;
+}
+.radial-btn {
+  position: absolute;
+  left: -26px;
+  top: -26px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bp);
+  background: var(--paper);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 6px 16px rgba(15, 32, 53, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transform-origin: center center;
+  transform: translate(var(--rx, 0px), var(--ry, 0px));
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 1;
+}
+.radial-btn[data-action="undo"] { --rx: 0px; --ry: -66px; }
+.radial-btn[data-action="stress"] { --rx: 66px; --ry: 0px; }
+.radial-btn[data-action="thrust"] { --rx: 0px; --ry: 66px; }
+.radial-btn[data-action="delete"] { --rx: -66px; --ry: 0px; }
+.radial-wrap.open .radial-btn {
+  animation: radialPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes radialPop {
+  0% { transform: translate(0, 0) scale(0.2); opacity: 0; }
+  100% { transform: translate(var(--rx, 0px), var(--ry, 0px)) scale(1); opacity: 1; }
+}
+.radial-btn:hover, .radial-btn:focus-visible {
+  background: var(--paper-hl);
+  border-color: var(--gold);
+  transform: translate(var(--rx, 0px), var(--ry, 0px)) scale(1.08);
+  box-shadow: 0 8px 20px rgba(15, 32, 53, 0.32);
+}
+.radial-btn:active {
+  transform: translate(var(--rx, 0px), var(--ry, 0px)) scale(0.94);
+}
+.radial-btn.on {
+  background: var(--bp);
+  color: var(--gold-light);
+  border-color: var(--gold);
+  box-shadow: 0 0 12px var(--gold-glow), 0 6px 18px rgba(15, 32, 53, 0.4);
+}
+.radial-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+  pointer-events: none;
+}
+.radial-btn i[data-icon] {
+  width: 22px;
+  height: 22px;
+}
+.radial-btn .radial-lbl {
+  font-size: 8.5px;
+  font-family: var(--fd);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+/* ==========================================================================
    RESPONSIVE BREAKPOINTS (MOBILE & TABLET)
    ========================================================================== */
 @media (max-width: 760px) {
@@ -910,6 +1055,9 @@ input[type=range] {
   .stats b { font-size: 13.5px; }
   .stats .lsn { max-width: 170px; font-size: 12.5px; padding: 2px 6px; }
   .acts { margin-left: auto; gap: 2px; }
+  /* Replace cramped top-right action buttons with radial menu trigger */
+  #bUndo, #bStress { display: none !important; }
+  #bRadial { display: inline-flex; }
   .ibtn { width: 44px; height: 44px; }
   .mbar { width: 56px; }
   .notes { top: calc(118px + var(--sa-t)); }
@@ -1407,6 +1555,7 @@ input[type=range] {
   </div>
   <div class="acts">
     <button class="ibtn" id="bHint" data-tt="hint" aria-label="İpucu"><i data-icon="hint"></i></button>
+    <button class="ibtn" id="bRadial" data-tt="radialMenu" aria-label="Hızlı Menü"><i data-icon="radial"></i></button>
     <button class="ibtn" id="bUndo" data-tt="undo" aria-label="Geri al"><i data-icon="undo"></i></button>
     <button class="ibtn" id="bStress" data-tt="stressView" aria-label="Gerilme görünümü"><i data-icon="stress"></i></button>
     <button class="ibtn" id="bPause" data-tt="pause" aria-label="Duraklat"><i data-icon="pause"></i></button>
@@ -1445,6 +1594,33 @@ input[type=range] {
     <button class="btn primary" id="bPGo" disabled><i data-icon="scaffold"></i><span data-t="pTest"></span></button>
     <button class="btn" id="bPNoPiece"><span data-t="pNoPiece"></span></button>
     <button class="btn" id="bPBack2"><span data-t="back"></span></button>
+  </div>
+</div>
+
+<!-- Mobile Radial Thumb Menu -->
+<div id="radialMenu" class="radial-wrap" hidden>
+  <div class="radial-backdrop" id="radialBackdrop"></div>
+  <div class="radial-hub" id="radialHub">
+    <div class="radial-ring"></div>
+    <div class="radial-center" id="radialCenter" role="button" aria-label="Kapat" title="Kapat">
+      <i data-icon="radial"></i>
+    </div>
+    <button class="radial-btn" id="rBtnUndo" data-action="undo" data-tt="radialUndo" aria-label="Geri al">
+      <i data-icon="undo"></i>
+      <span class="radial-lbl" data-t="radialUndo">Geri</span>
+    </button>
+    <button class="radial-btn" id="rBtnDelete" data-action="delete" data-tt="radialDelete" aria-label="Kaldır">
+      <i data-icon="erase"></i>
+      <span class="radial-lbl" data-t="radialDelete">Kaldır</span>
+    </button>
+    <button class="radial-btn" id="rBtnThrust" data-action="thrust" data-tt="radialThrust" aria-label="İtki çizgileri">
+      <i data-icon="thrust"></i>
+      <span class="radial-lbl" data-t="radialThrust">İtki</span>
+    </button>
+    <button class="radial-btn" id="rBtnStress" data-action="stress" data-tt="radialStress" aria-label="Gerilme görünümü">
+      <i data-icon="stress"></i>
+      <span class="radial-lbl" data-t="radialStress">Gerilme</span>
+    </button>
   </div>
 </div>
 
@@ -1625,6 +1801,8 @@ const I18N = {
     master: 'Ana ses', music: 'Müzik', effects: 'Efektler', language: 'Dil', quality: 'Kalite', low: 'Düşük', high: 'Yüksek', fullscreen: 'Tam ekran',
     stone: 'Taş', stress: 'Gerilme', test: 'İskeleyi kaldır', next: 'Sonraki sipariş', retry: 'Yeniden dene', rebuild: 'Onar ve devam et',
     hint: 'İpucu (H)', undo: 'Geri al (Z)', stressView: 'Gerilme görünümü (T)', pause: 'Duraklat (P)', sound: 'Ses', rotate: 'Döndür (R)', erase: 'Kaldır (Del)',
+    radialMenu: 'Hızlı Menü', radialUndo: 'Geri al', radialDelete: 'Kaldır', radialThrust: 'İtki', radialStress: 'Gerilme',
+    thrustLinesOn: 'İtki çizgileri açık', thrustLinesOff: 'İtki çizgileri kapalı',
     legendTitle: 'Gerilme', safe: 'güvenli', limit: 'sınır', legendKeys: '<kbd>V</kbd> basılı: itki çizgileri · <kbd>T</kbd> renkleri aç/kapa',
     pier: 'Ayak', wall: 'Duvar', buttress: 'Payanda', tower: 'Ağırlık kulesi', minaret: 'Minare', arch: 'Kemer', dome: 'Kubbe', half: 'Yarım kubbe',
     dome2: 'Kubbe 2', dome3: 'Kubbe 3', dome4: 'Kubbe 4', dome5: 'Kubbe 5', half3: 'Yarım kubbe 3', half4: 'Yarım kubbe 4', half5: 'Yarım kubbe 5',
@@ -1682,6 +1860,8 @@ const I18N = {
     master: 'Master', music: 'Music', effects: 'Effects', language: 'Language', quality: 'Quality', low: 'Low', high: 'High', fullscreen: 'Fullscreen',
     stone: 'Stone', stress: 'Stress', test: 'Remove the scaffolding', next: 'Next commission', retry: 'Try again', rebuild: 'Repair and continue',
     hint: 'Hint (H)', undo: 'Undo (Z)', stressView: 'Stress view (T)', pause: 'Pause (P)', sound: 'Sound', rotate: 'Rotate (R)', erase: 'Remove (Del)',
+    radialMenu: 'Radial Menu', radialUndo: 'Undo', radialDelete: 'Remove', radialThrust: 'Thrust', radialStress: 'Stress',
+    thrustLinesOn: 'Thrust lines on', thrustLinesOff: 'Thrust lines off',
     legendTitle: 'Stress', safe: 'safe', limit: 'limit', legendKeys: 'hold <kbd>V</kbd>: thrust lines · <kbd>T</kbd> colours on/off',
     pier: 'Pier', wall: 'Wall', buttress: 'Buttress', tower: 'Weight tower', minaret: 'Minaret', arch: 'Arch', dome: 'Dome', half: 'Half-dome',
     dome2: 'Dome 2', dome3: 'Dome 3', dome4: 'Dome 4', dome5: 'Dome 5', half3: 'Half-dome 3', half4: 'Half-dome 4', half5: 'Half-dome 5',
@@ -1769,6 +1949,8 @@ const ICON = {
   window: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 21V10a5 5 0 0 1 10 0v11z"/><path d="M12 5v16M7 14h10"/></svg>',
   quake: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h4l2-6 3 10 3-8 2 4h6"/></svg>',
   stoneIcon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 9l5-4h8l3 4v8l-4 3H7l-3-3z"/><path d="M9 5v15M4 9h17"/></svg>',
+  thrust: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 19V11a6 6 0 0 1 12 0v8"/><path d="M3 13l-2 2 2 2M21 13l2 2-2 2M1 15h3M20 15h3"/></svg>',
+  radial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="5" cy="12" r="2"/></svg>',
 };
 // Logo: a lead-grey dome over four piers with two half-domes, an İznik blue band
 const LOGO = `<svg viewBox="0 0 150 110" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -2775,7 +2957,7 @@ document.addEventListener('visibilitychange', () => { G.hidden = document.hidden
 // Flow: title, map, brief, play, test, result, ending
 // ---------------------------------------------------------------------------
 const OVERLAYS = ['title', 'map', 'brief', 'pause', 'settings', 'result', 'ending'];
-function showOverlay(id) { for (const o of OVERLAYS) $(o).hidden = o !== id; if (id) { const b = $(id).querySelector('button:not([hidden]):not(:disabled)'); if (b) b.focus(); } }
+function showOverlay(id) { if (id && typeof closeRadial === 'function') closeRadial(); for (const o of OVERLAYS) $(o).hidden = o !== id; if (id) { const b = $(id).querySelector('button:not([hidden]):not(:disabled)'); if (b) b.focus(); } }
 addEventListener('keydown', e => {
   if (e.key !== 'Tab') return;
   if (document.activeElement && document.activeElement.closest && document.activeElement.closest('.arena-modal')) return; // arena-kit dialog
@@ -2794,7 +2976,7 @@ addEventListener('keydown', e => {
     }
   }
 });
-function hudVisible(v) { $('predict').hidden = true; $('hud').hidden = !v; $('tools').hidden = !v; $('reqs').hidden = !v; $('legend').hidden = !v; }
+function hudVisible(v) { $('predict').hidden = true; if (!v && typeof closeRadial === 'function') closeRadial(); $('hud').hidden = !v; $('tools').hidden = !v; $('reqs').hidden = !v; $('legend').hidden = !v; }
 function goTitle() { G.daily = null; G.state = 'title'; G.paused = false; hudVisible(false); showOverlay('title'); refreshTitle(); if (!G.L) { G.L = LEVELS[0]; drawGrid(G.L); placeProps(G.L); frameLevel(); } G.camDist = Math.max(G.camDist, 22); G.camPitch = 0.5; }
 function refreshTitle() {
   const n = PROG.stars.filter(s => s > 0).length, s = PROG.stars.reduce((a, b) => a + (b || 0), 0);
@@ -2879,6 +3061,7 @@ function beginPlay(restoreLayout) {
 }
 // pred: null (no prediction) or { kind: 'stands' | 'falls', piece: a piece of G.pieces or null }
 function startTest(pred = null) {
+  if (typeof closeRadial === 'function') closeRadial();
   if (G.state !== 'play' || G.paused) return;
   if (!G.pieces.length) { toast(t('empty'), 'bad'); return; }
   G.testSnapshot = G.pieces.map(cloneP); G.state = 'test'; G.hint = null; ghost.visible = false; $('tools').hidden = true; $('reqs').hidden = true;
@@ -2888,6 +3071,7 @@ function startTest(pred = null) {
 // Predict-then-test: the scaffold button first asks for an optional prediction
 const pieceLabel = p => `${pieceName(p)} (${p.x},${p.z})`;
 function openPredict() {
+  if (typeof closeRadial === 'function') closeRadial();
   if (G.state !== 'play' || G.paused) return;
   if (!G.pieces.length) { toast(t('empty'), 'bad'); return; }
   G.state = 'predict'; G.pred = { kind: null, piece: null }; G.hint = null; G.hover = null; ghost.visible = false;
@@ -2984,6 +3168,7 @@ function showEnding() {
   showOverlay('ending');
 }
 function togglePause(force) {
+  if (typeof closeRadial === 'function') closeRadial();
   if (G.state !== 'play' && G.state !== 'test') return;
   G.paused = force === undefined ? !G.paused : force;
   if (G.paused) showOverlay('pause'); else showOverlay(null);
@@ -3077,6 +3262,81 @@ function cellFromEvent(cx, cy) {
   if (x < 0 || z < 0 || x >= G.L.grid[0] || z >= G.L.grid[1]) return null; return [x, z];
 }
 const pointers = new Map(); let drag = null, pinch = null;
+// Mobile Touch Radial Thumb Menu
+let longPressTimer = null, radialTargetPiece = null;
+function clearLongPress() {
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+}
+function openRadial(touchX, touchY) {
+  if (G.state !== 'play' && G.state !== 'test') return;
+  if (G.paused) return;
+  const pad = 96;
+  const saT = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sa-t')) || 0;
+  const saB = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sa-b')) || 0;
+  const minX = pad;
+  const maxX = Math.max(minX, innerWidth - pad);
+  const minY = pad + saT + 50;
+  const maxY = Math.max(minY, innerHeight - pad - saB - 60);
+  const cx = Math.max(minX, Math.min(maxX, touchX));
+  const cy = Math.max(minY, Math.min(maxY, touchY));
+
+  const hub = $('radialHub');
+  if (hub) {
+    hub.style.left = cx + 'px';
+    hub.style.top = cy + 'px';
+  }
+
+  const c = cellFromEvent(touchX, touchY);
+  radialTargetPiece = c ? pieceAt(c[0], c[1]) : null;
+
+  updateRadialState();
+
+  const menu = $('radialMenu');
+  if (menu) {
+    menu.hidden = false;
+    requestAnimationFrame(() => menu.classList.add('open'));
+  }
+  if (navigator.vibrate) try { navigator.vibrate(25); } catch (e) {}
+  sfxClick();
+}
+function closeRadial() {
+  const menu = $('radialMenu');
+  if (!menu || menu.hidden) return;
+  menu.classList.remove('open');
+  menu.hidden = true;
+  radialTargetPiece = null;
+}
+function updateRadialState() {
+  const uBtn = $('rBtnUndo'), dBtn = $('rBtnDelete'), tBtn = $('rBtnThrust'), sBtn = $('rBtnStress');
+  if (uBtn) uBtn.disabled = G.state !== 'play' || !G.undo || G.undo.length === 0;
+  if (dBtn) {
+    dBtn.disabled = G.state !== 'play';
+    dBtn.classList.toggle('on', G.sel === 'erase' || !!radialTargetPiece);
+  }
+  if (tBtn) tBtn.classList.toggle('on', !!G.showLines);
+  if (sBtn) sBtn.classList.toggle('on', !!SET.stress);
+}
+function radialAction(act) {
+  closeRadial();
+  bootAudio();
+  if (act === 'undo') {
+    undo();
+  } else if (act === 'delete') {
+    if (radialTargetPiece && G.pieces.includes(radialTargetPiece)) {
+      removePiece(radialTargetPiece);
+    } else {
+      selectTray(G.sel === 'erase' ? G.L.tray[0] : 'erase');
+    }
+  } else if (act === 'thrust') {
+    G.showLines = !G.showLines;
+    G.thrustPinned = G.showLines;
+    toast(t(G.showLines ? 'thrustLinesOn' : 'thrustLinesOff'));
+    updateRadialState();
+  } else if (act === 'stress') {
+    toggleStress();
+    updateRadialState();
+  }
+}
 function tapAt(cx, cy, button) {
   if (G.state === 'predict') { if (G.pred && G.pred.kind === 'falls' && button === 0) pickAt(cx, cy); return; }
   if (G.state !== 'play' || G.paused) return; const c = cellFromEvent(cx, cy); if (!c) return;
@@ -3085,23 +3345,46 @@ function tapAt(cx, cy, button) {
   if (!placePiece(spec, c[0], c[1], G.rot) && occupied && PT[occupied.t].layer === PT[spec.t].layer && button === 0) { /* occupied: the toast already said so */ }
 }
 canvas.addEventListener('pointerdown', e => {
-  bootAudio(); canvas.focus(); canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, button: e.button, moved: false });
-  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), ang: Math.atan2(b.y - a.y, b.x - a.x), dist: G.camDist, rotDone: false }; drag = null; }
-  else if (pointers.size === 1) drag = { yaw: G.camYaw, pitch: G.camPitch, x: e.clientX, y: e.clientY, id: e.pointerId };
+  bootAudio(); canvas.focus(); canvas.setPointerCapture(e.pointerId);
+  const p = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, button: e.button, moved: false, longPressed: false };
+  pointers.set(e.pointerId, p);
+  if (pointers.size === 2) {
+    clearLongPress();
+    const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), ang: Math.atan2(b.y - a.y, b.x - a.x), dist: G.camDist, rotDone: false }; drag = null;
+  }
+  else if (pointers.size === 1) {
+    drag = { yaw: G.camYaw, pitch: G.camPitch, x: e.clientX, y: e.clientY, id: e.pointerId };
+    if ((G.state === 'play' || G.state === 'test') && !G.paused && (e.pointerType !== 'mouse' || e.button === 0)) {
+      clearLongPress();
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        if (!p.moved && pointers.size === 1) {
+          p.longPressed = true;
+          drag = null;
+          openRadial(p.x, p.y);
+        }
+      }, 300);
+    }
+  }
 });
 canvas.addEventListener('pointermove', e => {
   const p = pointers.get(e.pointerId);
   if (!p) { if (e.pointerType === 'mouse' && G.L) { G.hover = cellFromEvent(e.clientX, e.clientY); } return; }
-  p.x = e.clientX; p.y = e.clientY; if (Math.hypot(p.x - p.sx, p.y - p.sy) > 8) p.moved = true;
+  p.x = e.clientX; p.y = e.clientY;
+  if (Math.hypot(p.x - p.sx, p.y - p.sy) > 8) {
+    p.moved = true;
+    clearLongPress();
+  }
   if (pinch && pointers.size === 2) { const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); G.camDist = Math.min(60, Math.max(6, pinch.dist * pinch.d / Math.max(10, d)));
     const ang = Math.atan2(b.y - a.y, b.x - a.x); let da = ang - pinch.ang; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI; if (!pinch.rotDone && Math.abs(da) > 0.45) { pinch.rotDone = true; rotateSel(); } return; }
   if (drag && drag.id === e.pointerId && p.moved) { G.camYaw = drag.yaw - (p.x - drag.x) * 0.006; G.camPitch = Math.min(1.35, Math.max(0.15, drag.pitch + (p.y - drag.y) * 0.005)); G.hover = null; }
   else if (e.pointerType === 'mouse' && G.L) G.hover = cellFromEvent(e.clientX, e.clientY);
 });
 function pointerEnd(e) {
+  clearLongPress();
   const p = pointers.get(e.pointerId); if (!p) return; pointers.delete(e.pointerId);
   if (pointers.size < 2) pinch = null;
-  if (!p.moved && pointers.size === 0 && !pinch && e.type === 'pointerup') { if (e.pointerType !== 'mouse') G.hover = cellFromEvent(e.clientX, e.clientY); tapAt(e.clientX, e.clientY, p.button); if (e.pointerType !== 'mouse') G.hover = null; }
+  if (!p.moved && !p.longPressed && pointers.size === 0 && !pinch && e.type === 'pointerup') { if (e.pointerType !== 'mouse') G.hover = cellFromEvent(e.clientX, e.clientY); tapAt(e.clientX, e.clientY, p.button); if (e.pointerType !== 'mouse') G.hover = null; }
   if (pointers.size === 0) drag = null; else if (pointers.size === 1) { const [id, q] = [...pointers.entries()][0]; drag = { yaw: G.camYaw, pitch: G.camPitch, x: q.x, y: q.y, id }; q.moved = true; }
 }
 canvas.addEventListener('pointerup', pointerEnd); canvas.addEventListener('pointercancel', pointerEnd);
@@ -3110,6 +3393,10 @@ canvas.addEventListener('wheel', e => { e.preventDefault(); G.camDist = Math.min
 addEventListener('keydown', e => {
   if (e.target && e.target.tagName === 'INPUT') return;
   const k = e.key.toLowerCase();
+  if (k === 'escape') {
+    const rm = $('radialMenu');
+    if (rm && !rm.hidden) { closeRadial(); e.preventDefault(); return; }
+  }
   if (G.state === 'predict' && (k === 'p' || k === 'escape')) { predictBack(); e.preventDefault(); return; }
   if (k === 'p' || k === 'escape') { if (G.state === 'play' || G.state === 'test') { togglePause(); e.preventDefault(); } else if (G.state === 'settings') closeSettings(); return; }
   if (k === 'm') { toggleMusic(); return; } if (k === 'x') { toggleSfx(); return; } if (k === 'l') { setLang(SET.lang === 'tr' ? 'en' : 'tr'); return; } if (k === 'f') { toggleFullscreen(); return; }
@@ -3118,7 +3405,7 @@ addEventListener('keydown', e => {
   else if (k === ' ') { e.preventDefault(); openPredict(); } else if (k === 't') toggleStress(); else if (k === 'v') G.showLines = true; else if (k === 'z') undo(); else if (k === 'h') showHint();
   else if (k === 'e') selectTray('erase'); else if (/^[1-9]$/.test(k)) { const key = G.L.tray[+k - 1]; if (key) selectTray(key); }
 });
-addEventListener('keyup', e => { if (e.key.toLowerCase() === 'v') G.showLines = false; });
+addEventListener('keyup', e => { if (e.key.toLowerCase() === 'v') G.showLines = !!G.thrustPinned; });
 // buttons
 const on = (id, fn) => $(id).addEventListener('click', () => { bootAudio(); fn(); });
 on('bPlay', () => { sfxClick(); openMap(); }); on('bContinue', () => { sfxClick(); openBrief(firstUnsolved()); });
@@ -3126,6 +3413,16 @@ on('bSettings', () => openSettings('title')); on('bLang2', () => setLang(SET.lan
 on('bMapBack', goTitle); on('bBrBack', openMap); on('bBegin', () => { sfxClick(); beginPlay(G.daily ? [] : undefined); });
 on('bDaily', () => { sfxClick(); startDaily(); }); on('bA11y', () => { if (window.Arena) Arena.openSettings(); });
 on('bRShare', () => shareResult(false)); on('bEShare', () => shareResult(true));
+on('bRadial', () => {
+  const r = $('bRadial').getBoundingClientRect();
+  openRadial(Math.max(80, r.left - 40), r.bottom + 80);
+});
+on('radialCenter', closeRadial);
+on('radialBackdrop', closeRadial);
+on('rBtnUndo', () => radialAction('undo'));
+on('rBtnDelete', () => radialAction('delete'));
+on('rBtnThrust', () => radialAction('thrust'));
+on('rBtnStress', () => radialAction('stress'));
 on('bHint', showHint); on('bUndo', undo); on('bStress', toggleStress); on('bPause', () => togglePause()); on('bSound', toggleSound);
 on('bRotate', rotateSel); on('bErase', () => selectTray(G.sel === 'erase' ? G.L.tray[0] : 'erase')); on('bTest', openPredict);
 on('bPStands', () => predictChoose('stands')); on('bPFalls', () => predictChoose('falls')); on('bPSkip', () => predictGo()); on('bPBack', predictBack); on('bPBack2', predictBack);
@@ -3216,7 +3513,7 @@ function frame(now) {
 }
 window.mimar = {};
 window.mimarSim = (seconds) => { G.simming = true; const step = 1 / 30; for (let s = 0; s < seconds; s += step) tick(step); G.simming = false; exportState(); return window.mimar; };
-window.mimarDebug = { G, LEVELS, PT, BOT, MASTERY, firstFailures, openPredict, predictChoose, predictPick, predictGo, simulate, evaluate, canPlace, placePiece, removePiece, startTest, openBrief, beginPlay, buildMap, showEnding, buildSkyline, paintSky, renderer, scene, camera, SET, PROG };
+window.mimarDebug = { G, LEVELS, PT, BOT, MASTERY, firstFailures, openPredict, predictChoose, predictPick, predictGo, simulate, evaluate, canPlace, placePiece, removePiece, startTest, openBrief, beginPlay, buildMap, showEnding, buildSkyline, paintSky, renderer, scene, camera, SET, PROG, openRadial, closeRadial, radialAction, updateRadialState };
 
 // boot: texts, icons, verify the reference solutions one per task (also fills the loading counter)
 fillIcons(); $('bDaily').querySelector('svg').setAttribute('fill', 'currentColor'); $('logoBig').innerHTML = LOGO; document.querySelector('.logo-s').innerHTML = LOGO;
