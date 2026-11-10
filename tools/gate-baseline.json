@@ -1,0 +1,17 @@
+{
+  "game": "mimar-sinan",
+  "recorded": "2026-11-10T00:09:44.088Z",
+  "commit": "833bf8d",
+  "entrySha": "6be28d51c2fb",
+  "run": "() => window.mimarSim(900)",
+  "metrics": {
+    "orders": 15,
+    "stars": 45,
+    "fell": 0,
+    "placeFailed": 0,
+    "skipped": 0,
+    "refOk": 15,
+    "done": true,
+    "gameErrors": 0
+  }
+}
