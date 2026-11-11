@@ -360,6 +360,73 @@ i[data-icon] svg { width: 100%; height: 100%; }
 .toast.out { opacity: 0; transform: translateY(-8px) scale(0.96); transition: all .3s ease-out; }
 @keyframes tin { from { opacity: 0; transform: translateY(-12px) scale(0.95); } to { opacity: 1; transform: none; } }
 
+/* Failure Diagnostics Panel (3-second collapse HUD) */
+.fail-diag {
+  position: fixed;
+  left: 50%;
+  top: calc(78px + var(--sa-t));
+  transform: translateX(-50%) translateY(-10px);
+  z-index: 28;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  background-color: var(--bp-bg);
+  background-image:
+    linear-gradient(to right, var(--bpgrid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--bpgrid) 1px, transparent 1px);
+  background-size: 20px 20px;
+  border: 1.5px solid var(--gold);
+  border-radius: 4px;
+  color: var(--bpline);
+  box-shadow: 0 12px 36px rgba(10, 20, 35, 0.55), 0 0 16px var(--gold-glow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s cubic-bezier(0.16, 1, 0.3, 1), transform .25s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: min(92vw, 560px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+.fail-diag.on {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+.fail-diag-icon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  color: #ff6b59;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(192, 57, 43, 0.22);
+  border: 1px solid rgba(255, 107, 89, 0.45);
+  border-radius: 3px;
+}
+.fail-diag-icon svg { width: 18px; height: 18px; }
+.fail-diag-content { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fail-diag-title {
+  font-family: var(--fd);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  line-height: 1.2;
+}
+.fail-diag-msg {
+  font-family: var(--fm);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: .02em;
+  line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  word-break: break-word;
+}
+
 /* ==========================================================================
    STRESS LEGEND & PIECE TRAY
    ========================================================================== */
@@ -1564,6 +1631,16 @@ input[type=range] {
   </div>
 </div>
 <div class="notes"><div id="reqs" class="reqs" hidden></div><div id="toasts" class="toasts" role="status" aria-live="polite"></div></div>
+
+<!-- Failure Diagnostics Panel -->
+<div id="failureDiagnostics" class="fail-diag diag-panel glass bp" role="alert" aria-live="assertive" hidden>
+  <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+  <div class="fail-diag-icon"><i data-icon="cross"></i></div>
+  <div class="fail-diag-content">
+    <div class="fail-diag-title" id="diagHead" data-t="diagTitle">Çöküş Tanısı</div>
+    <div class="fail-diag-msg" id="diagMsg"></div>
+  </div>
+</div>
 <div id="legend" class="legend glass" hidden>
   <div data-t="legendTitle"></div>
   <div class="bar"></div>
@@ -1814,6 +1891,7 @@ const I18N = {
     placed: '{n} kondu', removed: '{n} kaldırıldı', nothingHere: 'Burada parça yok', undoNone: 'Geri alınacak hamle yok', hintNext: 'İpucu: {n} şuraya', hintExtra: 'İpucu: bu parça çözümde yok, kaldır',
     hintDone: 'Çözüm tamam: iskeleyi kaldır', empty: 'Önce parça koy', testing: 'İskele kalkıyor…', quakeNow: 'Deprem!', stands: 'Yapı ayakta', survived: 'Depremi atlattı',
     collapsed: 'Yapı çöktü', rStands: 'Sipariş tamamlandı', rFell: 'Çöktü', rFellQuake: 'Depremde çöktü', rUnmet: 'Ayakta ama eksik', newRecord: 'Yeni rekor!',
+    diagTitle: 'Çöküş Tanısı',
     why_thrust: 'İtki çizgisi orta üçte birden çıktı: {n}', why_crush: 'Ayak ezildi: {n}', why_unsupported: 'Dayanaksız parça: {n}', why_uneven: 'Dayanaklar eşit yükseklikte değil: {n}',
     why_needsPiers: 'Büyük kubbe ayak ister, duvar değil: {n}', why_support: 'Dayanağı çöktü: {n}',
     star_dome: 'İstenen kubbe boyu', star_stone: 'Taş artırıldı (en az {n})', star_margin: 'Güvenlik payı (gerilme ≤ %80)', star_quake: 'Depremde pay (gerilme ≤ %90)',
@@ -1873,6 +1951,7 @@ const I18N = {
     placed: '{n} placed', removed: '{n} removed', nothingHere: 'No piece here', undoNone: 'Nothing to undo', hintNext: 'Hint: {n} goes here', hintExtra: 'Hint: this piece is not in the solution, remove it',
     hintDone: 'The solution is complete: remove the scaffolding', empty: 'Place some pieces first', testing: 'Scaffolding coming down…', quakeNow: 'Earthquake!', stands: 'It stands', survived: 'It survived the quake',
     collapsed: 'Collapse', rStands: 'Commission complete', rFell: 'It collapsed', rFellQuake: 'It fell in the earthquake', rUnmet: 'Standing, but incomplete', newRecord: 'New record!',
+    diagTitle: 'Failure Diagnostics',
     why_thrust: 'The thrust line left the middle third: {n}', why_crush: 'A pier was crushed: {n}', why_unsupported: 'Unsupported piece: {n}', why_uneven: 'Supports of unequal height: {n}',
     why_needsPiers: 'A big dome needs piers, not walls: {n}', why_support: 'Its support fell: {n}',
     star_dome: 'Dome of the asked size', star_stone: 'Stone left over (at least {n})', star_margin: 'Safety margin (stress ≤ 80%)', star_quake: 'Margin in the quake (stress ≤ 90%)',
@@ -2776,6 +2855,8 @@ function runSim() {
   G.ev = evaluate(G.L, G.pieces);
   applyTints(G.ev.gravity);
   updateHud(); updateReqs();
+  const fSim = failingSim(G.ev);
+  recordSimState(fSim || G.ev.gravity, G.L, G.pieces);
 }
 function applyTints(sim, cracking) {
   for (const [p, m] of G.meshes) {
@@ -2883,6 +2964,170 @@ function drawLines(sim) {
 }
 
 // ---------------------------------------------------------------------------
+// Failure Diagnostics Panel (3-second collapse HUD)
+// ---------------------------------------------------------------------------
+let diagTimer = null;
+window.simState = null;
+
+function pieceCoord(p) {
+  if (!p || p.x === undefined || p.z === undefined) return '';
+  const col = String.fromCharCode(65 + Math.max(0, Math.min(25, p.x)));
+  const row = p.z + 1;
+  return `${col}${row}`;
+}
+
+function pieceLabelForLang(p, lang) {
+  if (!p) return lang === 'tr' ? 'Parça' : 'Piece';
+  const dict = I18N[lang] || I18N.en;
+  const k = (p.t === 'dome' || p.t === 'half') && p.s ? p.t + p.s : p.t;
+  const name = dict[k] || dict[p.t] || p.t;
+  const coord = pieceCoord(p);
+  return coord ? `${name} ${coord}` : name;
+}
+
+function recordSimState(sim, level, pieces) {
+  if (!sim) {
+    if (!window.simState) window.simState = null;
+    return window.simState;
+  }
+  const curPieces = pieces || (G && G.pieces) || [];
+  const failing = curPieces.filter(p => sim.res && sim.res.get(p) && sim.res.get(p).status === 'fail');
+  const firsts = topFailures(sim);
+  const primary = firsts[0] || failing[0] || curPieces[0] || null;
+  const pr = primary && sim.res ? sim.res.get(primary) : null;
+
+  let thrustVal = 0, resistVal = 0;
+  let reason = pr ? pr.reason : (sim.reasons && sim.reasons[0]) || 'thrust';
+
+  if (pr) {
+    if (reason === 'thrust') {
+      const pt = primary ? PT[primary.t] : null;
+      const h = pt ? pt.h : 2.0;
+      const M = pr.e && pr.N ? pr.e * pr.N : (pr.H ? Math.hypot(pr.H[0], pr.H[1]) * h : 0);
+      const limitN = pr.limit && pr.N ? pr.limit * pr.N : (pr.limit || 0);
+      thrustVal = Math.round(M * 10) / 10;
+      resistVal = Math.round(limitN * 10) / 10;
+    } else if (reason === 'crush') {
+      const pt = primary ? PT[primary.t] : null;
+      thrustVal = Math.round((pr.N || 0) * 10) / 10;
+      resistVal = pt ? pt.cap : 30;
+    }
+  }
+
+  const pLabelTR = pieceLabelForLang(primary, 'tr');
+  const pLabelEN = pieceLabelForLang(primary, 'en');
+
+  let textTR = '', textEN = '';
+  let metricTR = '', metricEN = '';
+  if (reason === 'thrust') {
+    metricTR = thrustVal && resistVal ? `itki > direnç (${thrustVal} > ${resistVal})` : 'itki > direnç';
+    metricEN = thrustVal && resistVal ? `thrust > resist (${thrustVal} > ${resistVal})` : 'thrust > resist';
+    textTR = `${pLabelTR} devrildi: ${metricTR}`;
+    textEN = `${pLabelEN} tipped: ${metricEN}`;
+  } else if (reason === 'crush') {
+    metricTR = thrustVal && resistVal ? `yük > dayanım (${thrustVal} > ${resistVal})` : 'yük > dayanım';
+    metricEN = thrustVal && resistVal ? `load > limit (${thrustVal} > ${resistVal})` : 'load > limit';
+    textTR = `${pLabelTR} ezildi: ${metricTR}`;
+    textEN = `${pLabelEN} crushed: ${metricEN}`;
+  } else if (reason === 'unsupported') {
+    metricTR = 'dayanıksız parça';
+    metricEN = 'unsupported piece';
+    textTR = `${pLabelTR} çöktü: ${metricTR}`;
+    textEN = `${pLabelEN} collapsed: ${metricEN}`;
+  } else if (reason === 'uneven') {
+    metricTR = 'dengesiz dayanak';
+    metricEN = 'uneven supports';
+    textTR = `${pLabelTR} çöktü: ${metricTR}`;
+    textEN = `${pLabelEN} collapsed: ${metricEN}`;
+  } else if (reason === 'needsPiers') {
+    metricTR = 'büyük kubbe ayak ister';
+    metricEN = 'large dome requires piers';
+    textTR = `${pLabelTR} çöktü: ${metricTR}`;
+    textEN = `${pLabelEN} collapsed: ${metricEN}`;
+  } else {
+    metricTR = 'dayanak çöktü';
+    metricEN = 'support failure';
+    textTR = `${pLabelTR} çöktü: ${metricTR}`;
+    textEN = `${pLabelEN} collapsed: ${metricEN}`;
+  }
+
+  const isTR = SET.lang === 'tr';
+  const state = {
+    sim,
+    failed: !!sim.failed,
+    worst: sim.worst || 0,
+    reasons: sim.reasons || [],
+    failingPieces: failing,
+    firstFailures: firsts,
+    primaryPiece: primary,
+    failingPiece: primary,
+    piece: primary,
+    primaryRes: pr,
+    reason,
+    metric: isTR ? metricTR : metricEN,
+    metricTR,
+    metricEN,
+    metricLabel: isTR ? (reason === 'thrust' ? 'itki > direnç' : 'yük > dayanım') : (reason === 'thrust' ? 'thrust > resist' : 'load > limit'),
+    thrust: thrustVal,
+    resist: resistVal,
+    stress: pr ? pr.stress : (sim.worst || 0),
+    coord: pieceCoord(primary),
+    pieceName: isTR ? pLabelTR : pLabelEN,
+    text: isTR ? textTR : textEN,
+    textTR,
+    textEN,
+    message: isTR ? textTR : textEN,
+  };
+  window.simState = state;
+  return state;
+}
+
+function showFailureDiagnostics() {
+  const state = window.simState;
+  if (!state) return;
+  const diag = $('failureDiagnostics');
+  if (!diag) return;
+
+  clearTimeout(diagTimer);
+
+  const headEl = $('diagHead');
+  const msgEl = $('diagMsg');
+
+  // Read existing sim failure properties from window.simState
+  const isTR = SET.lang === 'tr';
+  const msg = (isTR ? state.textTR : state.textEN) || state.text || state.message || '';
+  const title = t('diagTitle');
+
+  if (headEl) headEl.textContent = title;
+  if (msgEl) msgEl.textContent = msg;
+  diag.dataset.message = msg;
+
+  diag.hidden = false;
+  void diag.offsetWidth;
+  diag.classList.add('on');
+
+  // Display for 3 seconds then auto-hide
+  diagTimer = setTimeout(() => {
+    hideFailureDiagnostics();
+  }, 3000);
+}
+
+function hideFailureDiagnostics(immediate = false) {
+  clearTimeout(diagTimer);
+  diagTimer = null;
+  const diag = $('failureDiagnostics');
+  if (!diag) return;
+  diag.classList.remove('on');
+  if (immediate) {
+    diag.hidden = true;
+  } else {
+    setTimeout(() => {
+      if (!diagTimer) diag.hidden = true;
+    }, 250);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Collapse: cracks, then rigid bodies falling, debris and dust
 // ---------------------------------------------------------------------------
 function startCollapse(sim) {
@@ -2890,6 +3135,8 @@ function startCollapse(sim) {
   G.bodiesList = failing.map(p => { const m = G.meshes.get(p); const r = sim.res.get(p); const dir = r.dir && (r.dir[0] || r.dir[1]) ? r.dir : [Math.random() - 0.5, Math.random() - 0.5]; const l = Math.hypot(dir[0], dir[1]) || 1;
     return { p, m, t: 0, phase: 'crack', base: m.position.clone(), dir: [dir[0] / l, dir[1] / l], v: new THREE.Vector3(), w: new THREE.Vector3(), settled: false, first: firsts.includes(p), size: p.t === 'dome' ? p.s : p.t === 'half' ? p.s * 0.7 : p.t === 'minaret' ? 7 : PT[p.t].h || 1, grey: p.t === 'dome' || p.t === 'half' }; });
   sfxCrack(); for (const b of G.bodiesList) puff(b.m.position.x, b.m.position.y + 0.5, b.m.position.z, 10, 1, 0.8);
+  recordSimState(sim, G.L, G.pieces);
+  showFailureDiagnostics();
 }
 function stepCollapse(dt) {
   let active = false;
@@ -2977,7 +3224,7 @@ addEventListener('keydown', e => {
   }
 });
 function hudVisible(v) { $('predict').hidden = true; if (!v && typeof closeRadial === 'function') closeRadial(); $('hud').hidden = !v; $('tools').hidden = !v; $('reqs').hidden = !v; $('legend').hidden = !v; }
-function goTitle() { G.daily = null; G.state = 'title'; G.paused = false; hudVisible(false); showOverlay('title'); refreshTitle(); if (!G.L) { G.L = LEVELS[0]; drawGrid(G.L); placeProps(G.L); frameLevel(); } G.camDist = Math.max(G.camDist, 22); G.camPitch = 0.5; }
+function goTitle() { hideFailureDiagnostics(true); G.daily = null; G.state = 'title'; G.paused = false; hudVisible(false); showOverlay('title'); refreshTitle(); if (!G.L) { G.L = LEVELS[0]; drawGrid(G.L); placeProps(G.L); frameLevel(); } G.camDist = Math.max(G.camDist, 22); G.camPitch = 0.5; }
 function refreshTitle() {
   const n = PROG.stars.filter(s => s > 0).length, s = PROG.stars.reduce((a, b) => a + (b || 0), 0);
   $('bestLine').textContent = (n ? t('bestLine', { s, n }) : t('bestNone')) + (MASTERY.n ? ' · ' + t('masteryLine', { s: MASTERY.pts, a: masteryAcc(), n: MASTERY.n }) : '');
@@ -3013,7 +3260,7 @@ function shareResult(ending) {
 }
 function arenaAward(id, key) { if (window.Arena && !FLAG.auto && !FLAG.nosave) Arena.award('mimar-sinan:' + id, 'Mimar Sinan · ' + t(key)); }
 function firstUnsolved() { for (let i = 0; i < 15; i++) if (!(PROG.stars[i] > 0)) return i; return 15; }
-function openMap() { G.daily = null; G.state = 'map'; hudVisible(false); buildMap(); showOverlay('map'); }
+function openMap() { hideFailureDiagnostics(true); G.daily = null; G.state = 'map'; hudVisible(false); buildMap(); showOverlay('map'); }
 function starsHtml(n, cls = 'stars') { let h = `<span class="${cls}">`; for (let i = 0; i < 3; i++) h += ICON.star.replace('<svg', `<svg class="${i < n ? 'on' : ''}"`); return h + '</span>'; }
 // same rule as the period map: a period opens when all but one order before it has a star; inside it, an order opens after the previous one
 function periodOpen(p) { const from = p * 5; return p === 0 || PROG.stars.slice(0, from).filter(s => s > 0).length >= from - 1; }
@@ -3045,6 +3292,7 @@ function reqChips(L) {
   return out.map(([ic, s]) => `<span class="chip"><i data-icon>${ic}</i>${s}</span>`).join('');
 }
 function openBrief(i) {
+  hideFailureDiagnostics(true);
   G.daily = null; G.li = i; G.L = LEVELS[i]; G.state = 'brief'; hudVisible(false);
   $('brTitle').textContent = `${i + 1}. ${t('L')[i][0]}`; $('brChips').innerHTML = reqChips(G.L);
   $('brNote').innerHTML = `<b>${t('lesson')}:</b> ${t('L')[i][1]}`;
@@ -3054,6 +3302,7 @@ function openBrief(i) {
   drawGrid(G.L); placeProps(G.L); frameLevel(); clearPieces(); buildScaffold(G.L, []); clearDebris(); scaffoldLower = 0; poles.visible = rails.visible = true;
 }
 function beginPlay(restoreLayout) {
+  hideFailureDiagnostics(true);
   G.state = 'play'; G.paused = false; G.undo = []; G.hint = null; G.test = null; G.pred = null; $('predict').hidden = true; G.lastResult = null; clearDebris(); scaffoldLower = 0; poles.visible = rails.visible = true;
   const saved = restoreLayout || (PROG.layouts[G.li] && !FLAG.auto ? PROG.layouts[G.li] : null);
   setPieces(saved || []); G.sel = G.L.tray[0]; G.rot = 0; buildTray(); refreshTray(); hudVisible(true); showOverlay(null); updateHud(); updateReqs(); canvas.focus();
@@ -3061,6 +3310,7 @@ function beginPlay(restoreLayout) {
 }
 // pred: null (no prediction) or { kind: 'stands' | 'falls', piece: a piece of G.pieces or null }
 function startTest(pred = null) {
+  hideFailureDiagnostics(true);
   if (typeof closeRadial === 'function') closeRadial();
   if (G.state !== 'play' || G.paused) return;
   if (!G.pieces.length) { toast(t('empty'), 'bad'); return; }
@@ -3157,7 +3407,7 @@ function finishTest() {
   showOverlay('result'); G.camDist *= 1.05;
   if (window.Arena && Arena.complete) Arena.complete({ mount: $('result').querySelector('.panel') });   // arena-kit v1.1: mimar-sinan/complete + one-tap 👍/👎 (nothing on ?auto)
 }
-function retryLevel() { const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); }
+function retryLevel() { hideFailureDiagnostics(true); const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); }
 function nextLevel() { if (G.li + 1 >= 15) showEnding(); else openBrief(G.li + 1); }
 function showEnding() {
   G.state = 'ending'; hudVisible(false); buildSkyline(15); site.position.set(0, 0, 0);
@@ -3201,6 +3451,12 @@ function applyTexts() {
   for (const el of document.querySelectorAll('[data-tt]')) { const val = t(el.dataset.tt); el.title = val; if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', val); }
   $('bLang').textContent = SET.lang.toUpperCase(); $('bLang2').textContent = SET.lang === 'tr' ? 'EN' : 'TR';
   $('legendKeys').innerHTML = t('legendKeys');
+  if ($('diagHead')) $('diagHead').textContent = t('diagTitle');
+  if (window.simState && $('failureDiagnostics') && !$('failureDiagnostics').hidden) {
+    const isTR = SET.lang === 'tr';
+    const msg = (isTR ? window.simState.textTR : window.simState.textEN) || window.simState.text || '';
+    if ($('diagMsg')) $('diagMsg').textContent = msg;
+  }
   if (G.state === 'map') buildMap(); if (G.state === 'brief') openBrief(G.li); if (G.state === 'play' || G.state === 'predict') { buildTray(); refreshTray(); updateHud(); updateReqs(); } predictText();
   refreshTitle();
 }
@@ -3431,6 +3687,7 @@ on('bResume', () => togglePause(false)); on('bRestart', () => { G.paused = false
 on('bSetBack', closeSettings); on('bFull', toggleFullscreen);
 on('bRMap', () => { site.position.set(0, 0, 0); openMap(); }); on('bRetry', retryLevel); on('bNext', nextLevel);
 on('bEMap', openMap); on('bEMenu', goTitle);
+on('failureDiagnostics', () => hideFailureDiagnostics(true));
 $('sMaster').addEventListener('input', e => { SET.master = +e.target.value; applyVolumes(); }); $('sMusic').addEventListener('input', e => { SET.music = +e.target.value; applyVolumes(); }); $('sSfx').addEventListener('input', e => { SET.sfx = +e.target.value; applyVolumes(); });
 for (const b of $('segLang').children) b.addEventListener('click', () => setLang(b.dataset.v));
 for (const b of $('segQ').children) b.addEventListener('click', () => setQuality(b.dataset.v));
@@ -3490,6 +3747,7 @@ function exportState() {
     complete: G.ev ? G.ev.complete : false, stars: PROG.stars.slice(), fps: DBG.fps, work: DBG.work, workMax: Math.round(DBG.workMax * 10) / 10, calls: DBG.calls, tris: DBG.tris, gpu: DBG.gpu,
     bot: { on: BOT.on, done: BOT.done, levelsDone: BOT.levelsDone, log: BOT.log }, errors: window.__errs, assets: ASSETS, loaded: G.loaded, test: G.test ? G.test.phase : null, lastResult: G.lastResult ? { complete: G.lastResult.complete, fell: G.lastResult.fell, stars: G.lastResult.starCount, pred: G.lastResult.pred } : null,
     mastery: { ...MASTERY, acc: masteryAcc() },
+    simState: window.simState,
   });
 }
 let last = performance.now();
@@ -3512,8 +3770,9 @@ function frame(now) {
   }
 }
 window.mimar = {};
+window.simState = null;
 window.mimarSim = (seconds) => { G.simming = true; const step = 1 / 30; for (let s = 0; s < seconds; s += step) tick(step); G.simming = false; exportState(); return window.mimar; };
-window.mimarDebug = { G, LEVELS, PT, BOT, MASTERY, firstFailures, openPredict, predictChoose, predictPick, predictGo, simulate, evaluate, canPlace, placePiece, removePiece, startTest, openBrief, beginPlay, buildMap, showEnding, buildSkyline, paintSky, renderer, scene, camera, SET, PROG, openRadial, closeRadial, radialAction, updateRadialState };
+window.mimarDebug = { G, LEVELS, PT, BOT, MASTERY, firstFailures, openPredict, predictChoose, predictPick, predictGo, simulate, evaluate, canPlace, placePiece, removePiece, startTest, openBrief, beginPlay, buildMap, showEnding, buildSkyline, paintSky, renderer, scene, camera, SET, PROG, openRadial, closeRadial, radialAction, updateRadialState, showFailureDiagnostics, hideFailureDiagnostics, recordSimState, retryLevel };
 
 // boot: texts, icons, verify the reference solutions one per task (also fills the loading counter)
 fillIcons(); $('bDaily').querySelector('svg').setAttribute('fill', 'currentColor'); $('logoBig').innerHTML = LOGO; document.querySelector('.logo-s').innerHTML = LOGO;
