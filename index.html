@@ -2846,6 +2846,9 @@ const G = {
   state: 'title', paused: false, hidden: false, time: 0, L: null, li: 0, pieces: [], undo: [], sel: null, rot: 0, hover: null, hoverOk: null,
   ev: null, meshes: new Map(), ghost: null, hint: null, hintT: 0, showLines: false, test: null, bodiesList: [], lastResult: null, loaded: false, simming: false,
   camYaw: -0.7, camPitch: 0.62, camDist: 16, camTarget: new THREE.Vector3(0, 1, 0), orbitAuto: 0, shake: 0, settingsFrom: 'title', testSnapshot: null, skyline: null, chiselNext: 1,
+  // Slow-mo Collapse Camera: 0.3x tick rate for 1.5s and camera lerp to failing piece
+  slowMo: { active: false, timer: 0, duration: 1.5, scale: 0.3, timeScale: 1.0, targetCoord: null, startTarget: null, startDist: 16, targetDist: 16, lerpElapsed: 0, lerpDuration: 1.2, isTransitioning: false, failingPiece: null },
+  timeScale: 1.0, defaultCamDist: 16,
 };
 const pieceGroup = new THREE.Group(); site.add(pieceGroup);
 function cloneP(p) { return { t: p.t, x: p.x, z: p.z, r: p.r || 0, s: p.s || 0 }; }
@@ -3137,6 +3140,39 @@ function startCollapse(sim) {
   sfxCrack(); for (const b of G.bodiesList) puff(b.m.position.x, b.m.position.y + 0.5, b.m.position.z, 10, 1, 0.8);
   recordSimState(sim, G.L, G.pieces);
   showFailureDiagnostics();
+
+  // Slow-mo Collapse Camera: focus on failing piece coordinate and scale simulation tick rate to 0.3x for 1.5s
+  const primary = firsts[0] || failing[0] || (G.bodiesList[0] && G.bodiesList[0].p) || null;
+  let targetCoord = null;
+  if (primary) {
+    const m = G.meshes.get(primary);
+    if (m) {
+      const midY = (pieceBaseY(primary, G.pieces) + pieceTop(primary, G.pieces)) * 0.5;
+      targetCoord = new THREE.Vector3(m.position.x, midY, m.position.z);
+    }
+  }
+  if (!targetCoord && G.bodiesList.length > 0 && G.bodiesList[0].m) {
+    const bm = G.bodiesList[0].m;
+    targetCoord = new THREE.Vector3(bm.position.x, bm.position.y + 0.8, bm.position.z);
+  }
+  if (!targetCoord) {
+    targetCoord = new THREE.Vector3(0, 1.2, 0);
+  }
+
+  G.slowMo.active = true;
+  G.slowMo.timer = 1.5;
+  G.slowMo.duration = 1.5;
+  G.slowMo.scale = 0.3;
+  G.slowMo.timeScale = 0.3;
+  G.timeScale = 0.3;
+  G.slowMo.failingPiece = primary;
+  G.slowMo.targetCoord = targetCoord;
+  G.slowMo.startTarget = G.camTarget.clone();
+  G.slowMo.startDist = G.camDist;
+  G.slowMo.targetDist = Math.max(9, G.camDist * 0.82);
+  G.slowMo.lerpElapsed = 0;
+  G.slowMo.lerpDuration = 1.2;
+  G.slowMo.isTransitioning = true;
 }
 function stepCollapse(dt) {
   let active = false;
@@ -3183,14 +3219,51 @@ function buildSkyline(upTo) {
 function fitCamera() {
   const W = innerWidth, H = innerHeight; camera.aspect = W / H; camera.updateProjectionMatrix();
 }
+function resetSlowMo() {
+  G.timeScale = 1.0;
+  if (G.slowMo) {
+    G.slowMo.active = false;
+    G.slowMo.timer = 0;
+    G.slowMo.timeScale = 1.0;
+    G.slowMo.isTransitioning = false;
+    G.slowMo.lerpElapsed = 0;
+    G.slowMo.targetCoord = null;
+    G.slowMo.failingPiece = null;
+  }
+}
+function resetCamera() {
+  G.camTarget.set(0, 1.2, 0);
+  if (G.defaultCamDist) {
+    G.camDist = G.defaultCamDist;
+  } else if (G.slowMo && G.slowMo.startDist) {
+    G.camDist = G.slowMo.startDist;
+  }
+}
 function updateCamera(dt) {
   if (G.state === 'result' || G.state === 'ending') G.camYaw += dt * (G.state === 'ending' ? 0.12 : 0.22);
+
+  // Smooth camera lerp toward the failing piece coordinate on collapse
+  if (G.slowMo && G.slowMo.isTransitioning && G.slowMo.targetCoord && G.slowMo.startTarget) {
+    G.slowMo.lerpElapsed += dt;
+    const progress = Math.min(1, G.slowMo.lerpElapsed / G.slowMo.lerpDuration);
+    const k = smooth(0, 1, progress);
+    G.camTarget.copy(G.slowMo.startTarget).lerp(G.slowMo.targetCoord, k);
+    if (G.slowMo.targetDist && G.slowMo.startDist) {
+      G.camDist = G.slowMo.startDist + (G.slowMo.targetDist - G.slowMo.startDist) * k;
+    }
+    if (progress >= 1) {
+      G.slowMo.isTransitioning = false;
+      G.camTarget.copy(G.slowMo.targetCoord);
+      if (G.slowMo.targetDist) G.camDist = G.slowMo.targetDist;
+    }
+  }
+
   const d = G.camDist, y = G.camPitch; const cx = Math.sin(G.camYaw) * Math.cos(y) * d, cz = Math.cos(G.camYaw) * Math.cos(y) * d, cy = Math.sin(y) * d;
   camera.position.set(G.camTarget.x + cx, G.camTarget.y + cy, G.camTarget.z + cz);
   if (G.shake > 0) { G.shake = Math.max(0, G.shake - dt * 0.8); const s = calm() ? 0 : G.shake * 0.25; camera.position.x += (Math.random() - 0.5) * s; camera.position.y += (Math.random() - 0.5) * s; }
   camera.lookAt(G.camTarget);
 }
-function frameLevel() { const M = Math.max(G.L.grid[0], G.L.grid[1]); G.camDist = M * 1.35 + 8 + (innerWidth < innerHeight ? M * 0.8 : 0); G.camTarget.set(0, 1.2, 0); G.camYaw = -0.7; G.camPitch = 0.62; const s = M / 2 + 4; sun.shadow.camera.left = -s; sun.shadow.camera.right = s; sun.shadow.camera.top = s; sun.shadow.camera.bottom = -s; sun.shadow.camera.updateProjectionMatrix(); }
+function frameLevel() { const M = Math.max(G.L.grid[0], G.L.grid[1]); G.camDist = M * 1.35 + 8 + (innerWidth < innerHeight ? M * 0.8 : 0); G.defaultCamDist = G.camDist; G.camTarget.set(0, 1.2, 0); G.camYaw = -0.7; G.camPitch = 0.62; const s = M / 2 + 4; sun.shadow.camera.left = -s; sun.shadow.camera.right = s; sun.shadow.camera.top = s; sun.shadow.camera.bottom = -s; sun.shadow.camera.updateProjectionMatrix(); }
 function onResize() { renderer.setSize(innerWidth, innerHeight); fitCamera(); }
 addEventListener('resize', onResize);
 // Hidden tab: rendering and audio always stop; the pause menu follows the arena-kit "pause when the tab is hidden"
@@ -3224,7 +3297,7 @@ addEventListener('keydown', e => {
   }
 });
 function hudVisible(v) { $('predict').hidden = true; if (!v && typeof closeRadial === 'function') closeRadial(); $('hud').hidden = !v; $('tools').hidden = !v; $('reqs').hidden = !v; $('legend').hidden = !v; }
-function goTitle() { hideFailureDiagnostics(true); G.daily = null; G.state = 'title'; G.paused = false; hudVisible(false); showOverlay('title'); refreshTitle(); if (!G.L) { G.L = LEVELS[0]; drawGrid(G.L); placeProps(G.L); frameLevel(); } G.camDist = Math.max(G.camDist, 22); G.camPitch = 0.5; }
+function goTitle() { hideFailureDiagnostics(true); resetSlowMo(); resetCamera(); G.daily = null; G.state = 'title'; G.paused = false; hudVisible(false); showOverlay('title'); refreshTitle(); if (!G.L) { G.L = LEVELS[0]; drawGrid(G.L); placeProps(G.L); frameLevel(); } G.camDist = Math.max(G.camDist, 22); G.camPitch = 0.5; }
 function refreshTitle() {
   const n = PROG.stars.filter(s => s > 0).length, s = PROG.stars.reduce((a, b) => a + (b || 0), 0);
   $('bestLine').textContent = (n ? t('bestLine', { s, n }) : t('bestNone')) + (MASTERY.n ? ' · ' + t('masteryLine', { s: MASTERY.pts, a: masteryAcc(), n: MASTERY.n }) : '');
@@ -3293,6 +3366,7 @@ function reqChips(L) {
 }
 function openBrief(i) {
   hideFailureDiagnostics(true);
+  resetSlowMo(); resetCamera();
   G.daily = null; G.li = i; G.L = LEVELS[i]; G.state = 'brief'; hudVisible(false);
   $('brTitle').textContent = `${i + 1}. ${t('L')[i][0]}`; $('brChips').innerHTML = reqChips(G.L);
   $('brNote').innerHTML = `<b>${t('lesson')}:</b> ${t('L')[i][1]}`;
@@ -3303,6 +3377,7 @@ function openBrief(i) {
 }
 function beginPlay(restoreLayout) {
   hideFailureDiagnostics(true);
+  resetSlowMo(); resetCamera();
   G.state = 'play'; G.paused = false; G.undo = []; G.hint = null; G.test = null; G.pred = null; $('predict').hidden = true; G.lastResult = null; clearDebris(); scaffoldLower = 0; poles.visible = rails.visible = true;
   const saved = restoreLayout || (PROG.layouts[G.li] && !FLAG.auto ? PROG.layouts[G.li] : null);
   setPieces(saved || []); G.sel = G.L.tray[0]; G.rot = 0; buildTray(); refreshTray(); hudVisible(true); showOverlay(null); updateHud(); updateReqs(); canvas.focus();
@@ -3407,7 +3482,7 @@ function finishTest() {
   showOverlay('result'); G.camDist *= 1.05;
   if (window.Arena && Arena.complete) Arena.complete({ mount: $('result').querySelector('.panel') });   // arena-kit v1.1: mimar-sinan/complete + one-tap 👍/👎 (nothing on ?auto)
 }
-function retryLevel() { hideFailureDiagnostics(true); const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); }
+function retryLevel() { hideFailureDiagnostics(true); resetSlowMo(); resetCamera(); const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); }
 function nextLevel() { if (G.li + 1 >= 15) showEnding(); else openBrief(G.li + 1); }
 function showEnding() {
   G.state = 'ending'; hudVisible(false); buildSkyline(15); site.position.set(0, 0, 0);
@@ -3729,15 +3804,31 @@ const DBG = { fps: 0, calls: 0, tris: 0, frames: 0, acc: 0, gpu: '?', work: 0, w
 const dbgEl = $('dbg'); if (FLAG.debug) dbgEl.hidden = false;
 try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); DBG.gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'unknown'; } catch (e) { DBG.gpu = '?'; }
 function tick(dt) {
-  G.time += dt;
+  // Slow-mo time dilation: active only on collapse for 1.5 seconds
+  const inCollapse = G.state === 'test' && G.test && G.test.phase === 'collapse';
+  if (inCollapse && G.slowMo && G.slowMo.timer > 0) {
+    G.slowMo.timer = Math.max(0, G.slowMo.timer - dt);
+    G.slowMo.active = true;
+    G.slowMo.timeScale = G.slowMo.scale;
+    G.timeScale = G.slowMo.scale;
+  } else {
+    if (G.slowMo) {
+      G.slowMo.active = false;
+      G.slowMo.timeScale = 1.0;
+    }
+    G.timeScale = 1.0;
+  }
+  const simDt = (G.slowMo && G.slowMo.active) ? dt * G.slowMo.scale : dt;
+
+  G.time += simDt;
   botStep(dt);
   if (G.paused) return;
-  if (G.state === 'test') stepTest(dt);
+  if (G.state === 'test') stepTest(simDt);
   if (G.state === 'play' && G.hint && G.hint.extra && G.time - G.hintT > 3) { const m = G.meshes.get(G.hint.extra); if (m && G.ev) applyTints(G.ev.gravity); G.hint = null; }
   if (G.state === 'play' && G.hint && G.hint.piece && G.time - G.hintT > 4) G.hint = null;
   if (G.state === 'ending') { G.sunsetT = Math.min(1, (G.sunsetT || 0) + dt * 0.2); const k = smooth(0, 1, G.sunsetT); if (Math.abs(k - SKY.sunset) > 0.01) { SKY.sunset = k; paintSky(k); } }
   else if (SKY.sunset > 0 && G.state !== 'ending') { SKY.sunset = 0; paintSky(0); }
-  if (!G.simming) { stepDust(dt); stepDebris(dt); animateProps(dt, G.time); }
+  if (!G.simming) { stepDust(simDt); stepDebris(simDt); animateProps(simDt, G.time); }
   // ambient site sounds while building
   if (G.state === 'play' && !G.simming) { G.chiselNext -= dt; if (G.chiselNext <= 0) { sfxChisel(0.12 + Math.random() * 0.1); G.chiselNext = 0.25 + Math.random() * 1.6; } AUD.creakT -= dt; if (AUD.creakT <= 0) { sfxCreak(); AUD.creakT = 7 + Math.random() * 9; } }
 }
@@ -3748,6 +3839,9 @@ function exportState() {
     bot: { on: BOT.on, done: BOT.done, levelsDone: BOT.levelsDone, log: BOT.log }, errors: window.__errs, assets: ASSETS, loaded: G.loaded, test: G.test ? G.test.phase : null, lastResult: G.lastResult ? { complete: G.lastResult.complete, fell: G.lastResult.fell, stars: G.lastResult.starCount, pred: G.lastResult.pred } : null,
     mastery: { ...MASTERY, acc: masteryAcc() },
     simState: window.simState,
+    timeScale: G.timeScale !== undefined ? G.timeScale : 1.0,
+    slowMo: G.slowMo ? { active: G.slowMo.active, timeScale: G.timeScale, timeLeft: G.slowMo.timer, targetCoord: G.slowMo.targetCoord ? [G.slowMo.targetCoord.x, G.slowMo.targetCoord.y, G.slowMo.targetCoord.z] : null } : null,
+    camTarget: [G.camTarget.x, G.camTarget.y, G.camTarget.z],
   });
 }
 let last = performance.now();
@@ -3772,7 +3866,7 @@ function frame(now) {
 window.mimar = {};
 window.simState = null;
 window.mimarSim = (seconds) => { G.simming = true; const step = 1 / 30; for (let s = 0; s < seconds; s += step) tick(step); G.simming = false; exportState(); return window.mimar; };
-window.mimarDebug = { G, LEVELS, PT, BOT, MASTERY, firstFailures, openPredict, predictChoose, predictPick, predictGo, simulate, evaluate, canPlace, placePiece, removePiece, startTest, openBrief, beginPlay, buildMap, showEnding, buildSkyline, paintSky, renderer, scene, camera, SET, PROG, openRadial, closeRadial, radialAction, updateRadialState, showFailureDiagnostics, hideFailureDiagnostics, recordSimState, retryLevel };
+window.mimarDebug = { G, LEVELS, PT, BOT, MASTERY, firstFailures, openPredict, predictChoose, predictPick, predictGo, simulate, evaluate, canPlace, placePiece, removePiece, startTest, openBrief, beginPlay, buildMap, showEnding, buildSkyline, paintSky, renderer, scene, camera, SET, PROG, openRadial, closeRadial, radialAction, updateRadialState, showFailureDiagnostics, hideFailureDiagnostics, recordSimState, retryLevel, resetSlowMo, resetCamera, slowMo: G.slowMo };
 
 // boot: texts, icons, verify the reference solutions one per task (also fills the loading counter)
 fillIcons(); $('bDaily').querySelector('svg').setAttribute('fill', 'currentColor'); $('logoBig').innerHTML = LOGO; document.querySelector('.logo-s').innerHTML = LOGO;
