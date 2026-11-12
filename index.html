@@ -1868,22 +1868,58 @@ const FLAG = {
 // No external asset files: every mesh, texture and sound is generated in code, so ?noassets changes nothing.
 const ASSETS = { used: false, loaded: [], skipped: FLAG.noassets, note: 'procedural only' };
 const KEY = 'arena.mimar.';
-function load(k, def) { try { const v = localStorage.getItem(KEY + k); return v ? Object.assign(def, JSON.parse(v)) : def; } catch (e) { return def; } }
+// Ignore non-object JSON roots and coerce saved fields so corrupted localStorage cannot break boot
+function load(k, def) {
+  try {
+    const v = localStorage.getItem(KEY + k);
+    if (!v) return def;
+    const p = JSON.parse(v);
+    return p && typeof p === 'object' && !Array.isArray(p) ? Object.assign(def, p) : def;
+  } catch (e) { return def; }
+}
 function store(k, v) { if (FLAG.nosave || FLAG.auto) return; try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
 const isPhone = matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 820;
 /** arena-kit "reduce motion": no camera shake, the site does not sway in the earthquake. Read live (visual layer only, the sim never reads it). */
 const calm = () => !!(window.Arena && Arena.settings && Arena.settings.reducedMotion);
-const SET = load('settings', { master: 0.8, music: 0.6, sfx: 0.8, lang: /^tr/i.test(navigator.language || '') ? 'tr' : 'en', quality: isPhone ? 'low' : 'high', musicOn: true, sfxOn: true, stress: true, colorblind: false });
+const defLang = /^tr/i.test(navigator.language || '') ? 'tr' : 'en', defQual = isPhone ? 'low' : 'high';
+const SET = load('settings', { master: 0.8, music: 0.6, sfx: 0.8, lang: defLang, quality: defQual, musicOn: true, sfxOn: true, stress: true, colorblind: false });
+SET.master = Number.isFinite(+SET.master) ? Math.min(1, Math.max(0, +SET.master)) : 0.8;
+SET.music = Number.isFinite(+SET.music) ? Math.min(1, Math.max(0, +SET.music)) : 0.6;
+SET.sfx = Number.isFinite(+SET.sfx) ? Math.min(1, Math.max(0, +SET.sfx)) : 0.8;
+if (SET.lang !== 'tr' && SET.lang !== 'en') SET.lang = defLang;
+if (SET.quality !== 'low' && SET.quality !== 'high') SET.quality = defQual;
+SET.musicOn = typeof SET.musicOn === 'boolean' ? SET.musicOn : true;
+SET.sfxOn = typeof SET.sfxOn === 'boolean' ? SET.sfxOn : true;
+SET.stress = typeof SET.stress === 'boolean' ? SET.stress : true;
+SET.colorblind = !!SET.colorblind;
 if (FLAG.lang === 'tr' || FLAG.lang === 'en') SET.lang = FLAG.lang;
 if (FLAG.low) SET.quality = 'low';
 if (Q.has('colorblind')) SET.colorblind = Q.get('colorblind') !== '0' && Q.get('colorblind') !== 'false';
 const PROG = load('save', { stars: [], cur: 0, layouts: {} });
+PROG.stars = Array.isArray(PROG.stars) ? PROG.stars.slice(0, 15).map(s => Math.max(0, Math.min(3, Math.floor(Number(s) || 0)))) : [];
+PROG.cur = Math.max(0, Math.min(15, Math.floor(Number(PROG.cur) || 0)));
+if (!PROG.layouts || typeof PROG.layouts !== 'object' || Array.isArray(PROG.layouts)) PROG.layouts = {};
+else {
+  const validT = new Set(['pier', 'wall', 'buttress', 'minaret', 'tower', 'arch', 'dome', 'half']);
+  for (const lk of Object.keys(PROG.layouts)) {
+    const arr = PROG.layouts[lk];
+    if (!Array.isArray(arr)) { delete PROG.layouts[lk]; continue; }
+    const clean = [];
+    for (const q of arr) {
+      if (!q || typeof q !== 'object' || !validT.has(q.t) || !Number.isFinite(+q.x) || !Number.isFinite(+q.z)) continue;
+      const needS = q.t === 'dome' || q.t === 'half';
+      clean.push({ t: q.t, x: Math.floor(+q.x), z: Math.floor(+q.z), r: (Math.floor(+q.r || 0) & 3), s: needS ? Math.max(2, Math.min(5, Math.floor(+q.s || (q.t === 'half' ? 3 : 2)))) : 0 });
+    }
+    if (clean.length) PROG.layouts[lk] = clean; else delete PROG.layouts[lk];
+  }
+}
 const BEST = load('best', { stars: 0 });
+BEST.stars = Math.max(0, Math.min(45, Math.floor(Number(BEST.stars) || 0)));
 if (FLAG.auto || FLAG.nosave) { PROG.stars = []; PROG.cur = 0; PROG.layouts = {}; }
 // Predict-then-test mastery: its own key (prefix mimarsinan.), not saved in ?auto or ?nosave
 const MKEY = 'mimarsinan.mastery';
 const MASTERY = { pts: 0, n: 0, ok: 0, pieceOk: 0 };
-if (!FLAG.auto && !FLAG.nosave) { try { const v = JSON.parse(localStorage.getItem(MKEY) || 'null'); if (v) for (const k in MASTERY) MASTERY[k] = Math.max(0, Math.floor(Number(v[k]) || 0)); } catch (e) { /* private mode or bad JSON */ } }
+if (!FLAG.auto && !FLAG.nosave) { try { const v = JSON.parse(localStorage.getItem(MKEY) || 'null'); if (v && typeof v === 'object' && !Array.isArray(v)) for (const k in MASTERY) MASTERY[k] = Math.max(0, Math.floor(Number(v[k]) || 0)); } catch (e) { /* private mode or bad JSON */ } }
 function saveMastery() { if (FLAG.nosave || FLAG.auto) return; try { localStorage.setItem(MKEY, JSON.stringify(MASTERY)); } catch (e) { /* private mode */ } }
 const PRED_PTS = { outcome: 10, piece: 15 }; // right stands/collapses call; bonus for naming the first piece to fail
 const masteryAcc = () => MASTERY.n ? Math.round(MASTERY.ok / MASTERY.n * 100) : 0;
@@ -2017,7 +2053,8 @@ const I18N = {
     ],
   },
 };
-const t = (k, vars) => { let s = (I18N[SET.lang] || I18N.tr)[k]; if (s === undefined) s = k; if (vars) for (const v in vars) s = s.replace('{' + v + '}', vars[v]); return s; };
+// Replace every {x} placeholder literally via split/join (avoids first-only match and '$' replacement patterns)
+const t = (k, vars) => { let s = (I18N[SET.lang] || I18N.tr)[k]; if (s === undefined) s = k; if (vars && typeof s === 'string') for (const v in vars) s = s.split('{' + v + '}').join(String(vars[v])); return s; };
 // Guard piece name fallback when size is omitted
 const pieceName = p => t((p.t === 'dome' || p.t === 'half') && p.s ? p.t + p.s : p.t);
 
