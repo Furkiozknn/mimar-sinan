@@ -4060,6 +4060,17 @@ function finishTest() {
   showOverlay('result'); G.camDist *= 1.05;
   if (window.Arena && Arena.complete) Arena.complete({ mount: $('result').querySelector('.panel') });   // arena-kit v1.1: mimar-sinan/complete + one-tap 👍/👎 (nothing on ?auto)
 }
+// Portal ad hooks (G-050). Ads only at the natural break: after the work's test, when the player leaves the result card
+// (next work, rebuild, commissions map). On the game's own site (no portal SDK) afterBreak() runs the action
+// synchronously, exactly as before; ?auto silences the kit (portal 'none'), so the bot's button clicks stay synchronous.
+// One tap = one action. No rewarded hook: "strengthen once before the test" would put an ad mid-work (the test is part
+// of the build) and change the structural simulation and the stars it scores.
+let breakBusy = false;
+function afterBreak(f) {
+  if (!(window.Arena && Arena.portal && Arena.portal.name !== 'none')) return f(); // own site: synchronous, as before
+  if (breakBusy) return; breakBusy = true;
+  Arena.portal.midgame().catch(() => false).then(() => { breakBusy = false; if (G.state === 'result') f(); });
+}
 function retryLevel() { hideFailureDiagnostics(true); resetSlowMo(); resetCamera(); const snap = G.testSnapshot; G.state = 'play'; site.position.set(0, 0, 0); beginPlay(snap && snap.length ? snap : null); }
 function nextLevel() { if (G.li + 1 >= 15) showEnding(); else openBrief(G.li + 1); }
 function showEnding() {
@@ -4362,7 +4373,7 @@ on('bPStands', () => predictChoose('stands')); on('bPFalls', () => predictChoose
 on('bPGo', () => predictGo()); on('bPNoPiece', () => predictGo(true));
 on('bResume', () => togglePause(false)); on('bRestart', () => { G.paused = false; site.position.set(0, 0, 0); beginPlay([]); }); on('bPSettings', () => openSettings('pause')); on('bPMenu', () => { G.paused = false; if (AUD.ctx) AUD.ctx.resume(); site.position.set(0, 0, 0); goTitle(); });
 on('bSetBack', closeSettings); on('bFull', toggleFullscreen);
-on('bRMap', () => { site.position.set(0, 0, 0); openMap(); }); on('bRetry', retryLevel); on('bNext', nextLevel);
+on('bRMap', () => afterBreak(() => { site.position.set(0, 0, 0); openMap(); })); on('bRetry', () => afterBreak(retryLevel)); on('bNext', () => afterBreak(nextLevel));
 on('bEMap', openMap); on('bEMenu', goTitle);
 on('failureDiagnostics', () => hideFailureDiagnostics(true));
 $('sMaster').addEventListener('input', e => { SET.master = +e.target.value; applyVolumes(); }); $('sMusic').addEventListener('input', e => { SET.music = +e.target.value; applyVolumes(); }); $('sSfx').addEventListener('input', e => { SET.sfx = +e.target.value; applyVolumes(); });
