@@ -4,8 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="arena-game" content="mimar-sinan">
-<title>Mimar Sinan</title>
-<meta name="description" content="A 3D construction-physics puzzle about building Ottoman mosques: piers, arches, half-domes and weight towers against the thrust of the dome. Claude Game Arena, built by Claude Fable 5.1.">
+<title>Mimar Sinan · Osmanlı camisi inşa et</title>
+<meta name="description" content="Kubbenin itkisine karşı ayak, kemer, yarım kubbe ve ağırlık kulesiyle Osmanlı camileri kuran 3B yapı fiziği bulmacası. 3 dönemde 15 sipariş, tarayıcıda ücretsiz.">
+<meta name="theme-color" content="#0f2035">
+<link rel="canonical" href="https://furkiozknn.github.io/mimar-sinan/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f2035'/%3E%3Cpath d='M12 46h40M16 46V32M48 46V32M16 32a16 16 0 0 1 32 0' fill='none' stroke='%23c9a34a' stroke-width='4' stroke-linecap='round'/%3E%3Cpath d='M32 10v6' stroke='%23c9a34a' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Claude Game Arena">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:url" content="https://furkiozknn.github.io/mimar-sinan/">
+<meta property="og:title" content="Mimar Sinan · Osmanlı camisi inşa et">
+<meta property="og:description" content="Kubbenin itkisine karşı ayak, kemer ve yarım kubbe kur; iskeleyi kaldır, kubbe ayakta kalsın. 3 dönemde 15 sipariş.">
+<meta property="og:image" content="https://furkiozknn.github.io/mimar-sinan/docs/card.jpg">
+<meta property="og:image:alt" content="Mimar Sinan: tepede kurulan bir caminin üç boyutlu inşaat bulmacası">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mimar Sinan · Osmanlı camisi inşa et">
+<meta name="twitter:description" content="Kubbenin itkisine karşı ayak, kemer ve yarım kubbe kur; iskeleyi kaldır, kubbe ayakta kalsın.">
+<meta name="twitter:image" content="https://furkiozknn.github.io/mimar-sinan/docs/card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -790,6 +805,16 @@ input[type=range] {
   width: 100px; font-size: 14.5px;
   color: var(--ink); font-family: var(--fd); font-weight: 600;
 }
+.vtag { background: none; border: 0; color: var(--gold-light); font: 600 12.5px var(--fm); letter-spacing: .04em; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; min-height: 44px; padding: 0 14px; }
+.vtag:hover { color: #fff; }
+.vtag:focus-visible { outline: 2px solid var(--gold-light); outline-offset: 2px; border-radius: 4px; }
+#news h3 { margin: 14px 0 6px; font-size: 14px; letter-spacing: .06em; color: var(--gold-dark); }
+#newsList { margin: 0; padding-left: 18px; font-family: var(--fb); font-size: 14px; line-height: 1.5; color: var(--ink); }
+#newsList li { margin: 0 0 6px; }
+#ledger { width: 100%; border-collapse: collapse; font-family: var(--fm); font-size: 12.5px; color: var(--ink); }
+#ledger td { padding: 4px 6px; border-bottom: 1px solid var(--line2); } #ledger td + td { white-space: nowrap; }
+#ledger tr.bad td { color: var(--red); }
+#ledgerEmpty { margin: 0; font-family: var(--fb); font-size: 13.5px; color: var(--ink2); }
 .footer {
   margin-top: 16px; font-size: 12.5px;
   color: var(--ink2); text-align: center;
@@ -2181,12 +2206,14 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test 
       <button class="btn primary w" id="bPlay" disabled><i data-icon="play"></i><span data-t="play"></span></button>
       <button class="btn w" id="bContinue" hidden><i data-icon="play"></i><span data-t="continue"></span> <small id="contInfo"></small></button>
       <button class="btn w" id="bDaily" disabled><i data-icon="star"></i><span data-t="daily"></span> <small id="dailyInfo"></small></button>
-      <div class="row" style="justify-content:center">
+      <div class="row" style="justify-content:center;flex-wrap:wrap">
         <button class="btn" id="bSettings"><i data-icon="gear"></i><span data-t="settings"></span></button>
         <button class="btn" id="bLang2">EN</button>
+        <a class="btn" id="bOther" href="https://furkiozknn.github.io/" target="_blank" rel="noopener" style="text-decoration:none"><span data-t="otherGames"></span></a>
       </div>
     </div>
     <p class="best" id="bestLine"></p>
+    <p style="margin:6px 0 0;text-align:center"><button class="vtag" id="bNews" type="button" aria-haspopup="dialog"></button></p>
     <p class="footer">Claude Game Arena · <a href="https://github.com/Furkiozknn" target="_blank" rel="noopener">built by Claude Fable 5.1</a></p>
   </div>
 </div>
@@ -2244,6 +2271,20 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test 
     <div class="row"><span class="lbl" data-t="fullscreen"></span><button class="btn" id="bFull"><i data-icon="full"></i><span data-t="fullscreen"></span></button></div>
     <button class="btn w" id="bA11y"><span data-t="a11y"></span></button>
     <button class="btn primary w" id="bSetBack" style="margin-top:6px"><span data-t="back"></span></button>
+  </div>
+</div>
+
+<!-- What is new + master ledger -->
+<div id="news" class="overlay" role="dialog" aria-modal="true" aria-labelledby="newsHeading" hidden>
+  <div class="panel glass col">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <h2 id="newsHeading" class="serif" data-t="newsTitle"></h2>
+    <p class="sub" id="newsVer" style="margin:0"></p>
+    <ul id="newsList"></ul>
+    <h3 class="serif" data-t="ledgerTitle"></h3>
+    <p id="ledgerEmpty" data-t="ledgerEmpty" hidden></p>
+    <table id="ledger"><tbody id="ledgerBody"></tbody></table>
+    <button class="btn primary w" id="bNewsBack" style="margin-top:10px"><span data-t="back"></span></button>
   </div>
 </div>
 
@@ -2377,6 +2418,9 @@ function saveProg() { store('save', PROG); }
 // ---------------------------------------------------------------------------
 const I18N = {
   tr: {
+    otherGames: 'Diğer oyunlar', newsTitle: 'Yenilikler', ledgerTitle: 'Usta defteri · son denemeler', ledgerEmpty: 'Henüz deneme yok. Bir siparişte iskeleyi kaldırınca sonuç buraya yazılır.',
+    verLabel: 'v1.1 · Kasım 2026', verOpen: 'Yenilikleri aç', ledStands: 'ayakta', ledFell: 'çöktü', ledUnmet: 'eksik',
+    newsItems: ['Yenilikler penceresi ve sürüm etiketi: ana menüde «v1.1 · Kasım 2026» düğmesi bu listeyi açar.', 'Usta defteri: son 8 denemenin sonucu (sipariş, ayakta/çöktü, yıldız, kullanılan taş, en yüksek gerilme) bu cihazda tutulur.', 'Ana menüye «Diğer oyunlar» bağlantısı eklendi.', 'Esc tuşu artık sipariş haritasından ana menüye, sipariş ön bilgisinden haritaya döndürür.', 'Sayfa: Türkçe başlık ve açıklama, paylaşım kartı, sekme simgesi ve Türkçe 404 sayfası.'],
     subtitle: 'Kubbenin itkisine karşı ayak, kemer, yarım kubbe ve ağırlık kulesi', play: 'Oyna', continue: 'Devam et', settings: 'Ayarlar',
     howto: 'Tepsiden parça seç, ızgaraya koy. Her kemer ve kubbe dışa iter: itki çizgisi ayağın orta üçte birinden çıkarsa taş çatlar. İskeleyi kaldır ve dene; 3 dönemde 15 sipariş.',
     commissions: 'Siparişler', begin: 'Başla', back: 'Geri', paused: 'Duraklatıldı', resume: 'Devam', restart: 'Siparişi yeniden başlat', mainMenu: 'Ana menü',
@@ -2438,6 +2482,9 @@ const I18N = {
     ],
   },
   en: {
+    otherGames: 'More games', newsTitle: "What's new", ledgerTitle: "Master's ledger · recent tests", ledgerEmpty: 'No tests yet. Remove the scaffolding on a commission and the result is written here.',
+    verLabel: 'v1.1 · November 2026', verOpen: "Open what's new", ledStands: 'stands', ledFell: 'fell', ledUnmet: 'unmet',
+    newsItems: ["What's-new window and a version tag: the \"v1.1 · November 2026\" button on the main menu opens this list.", "Master's ledger: the last 8 tests (commission, stood or fell, stars, stone used, peak stress) are kept on this device.", 'A "More games" link on the main menu.', 'Esc now steps back from the commissions map to the main menu and from a commission brief to the map.', 'Page: Turkish title and description, share card, tab icon and a Turkish 404 page.'],
     subtitle: 'Piers, arches, half-domes and weight towers against the thrust of the dome', play: 'Play', continue: 'Continue', settings: 'Settings',
     howto: 'Pick a piece from the tray and place it on the grid. Every arch and dome pushes outward: when the thrust line leaves the middle third of a pier, the stone cracks. Remove the scaffolding to test; 15 commissions in 3 periods.',
     commissions: 'Commissions', begin: 'Begin', back: 'Back', paused: 'Paused', resume: 'Resume', restart: 'Restart commission', mainMenu: 'Main menu',
@@ -3854,7 +3901,30 @@ document.addEventListener('visibilitychange', () => { G.hidden = document.hidden
 // ---------------------------------------------------------------------------
 // Flow: title, map, brief, play, test, result, ending
 // ---------------------------------------------------------------------------
-const OVERLAYS = ['title', 'map', 'brief', 'pause', 'settings', 'result', 'ending'];
+const OVERLAYS = ['title', 'map', 'brief', 'pause', 'settings', 'result', 'ending', 'news'];
+// Master ledger: last 8 tests, own key (arena.mimar.history); store() skips ?auto and ?nosave
+const HIST = load('history', { list: [] });
+HIST.list = Array.isArray(HIST.list) ? HIST.list.filter(h => h && Number.isFinite(+h.li)).slice(-8) : [];
+function recordHistory(fell, complete, ev) {
+  if (G.daily) return;
+  const worst = Math.max(ev.gravity.worst, ev.quake ? ev.quake.worst : 0);
+  HIST.list.push({ li: G.li, r: fell ? 'f' : complete ? 's' : 'u', st: complete ? ev.starCount : 0, used: ev.used, w: Math.round(worst * 100) });
+  HIST.list = HIST.list.slice(-8); store('history', HIST);
+}
+function openNews() {
+  $('newsVer').textContent = t('verLabel');
+  $('newsList').innerHTML = t('newsItems').map(x => '<li>' + x.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</li>').join('');
+  const body = $('ledgerBody'); body.innerHTML = ''; $('ledgerEmpty').hidden = HIST.list.length > 0; $('ledger').hidden = !HIST.list.length;
+  for (const h of HIST.list.slice().reverse()) {
+    const tr = document.createElement('tr'); if (h.r !== 's') tr.className = 'bad';
+    const name = (t('L')[h.li] || ['?'])[0];
+    const cells = [(h.li + 1) + '. ' + name, t(h.r === 's' ? 'ledStands' : h.r === 'f' ? 'ledFell' : 'ledUnmet'), h.r === 's' ? ('★'.repeat(h.st) || '–') : '–', h.used + ' ' + (SET.lang === 'tr' ? 'taş' : 'st'), '%' + h.w];
+    for (const c of cells) { const td = document.createElement('td'); td.textContent = c; tr.appendChild(td); }
+    body.appendChild(tr);
+  }
+  showOverlay('news');
+}
+function closeNews() { showOverlay('title'); refreshTitle(); $('bNews').focus(); }
 function showOverlay(id) { if (id && typeof closeRadial === 'function') closeRadial(); for (const o of OVERLAYS) $(o).hidden = o !== id; if (id) { const b = $(id).querySelector('button:not([hidden]):not(:disabled)'); if (b) b.focus(); } }
 addEventListener('keydown', e => {
   if (e.key !== 'Tab') return;
@@ -4043,6 +4113,7 @@ function finishTest() {
     + (fell && pred.right && pred.piece ? ' · ' + (pred.pieceRight ? t('pPieceRight') : t('pPieceWrong', { n: pred.first.slice(0, 2).join(', ') })) : fell && !pred.right ? ' · ' + t('pPieceWrong', { n: pred.first.slice(0, 2).join(', ') }) : '')
     + `<br><b>${t('pMastery', { p: pred.pts, s: MASTERY.pts, a: masteryAcc() })}</b>`;
   else rp.textContent = t('pNoPred', { s: MASTERY.pts });
+  recordHistory(fell, complete, ev);
   G.lastResult = { fell, complete, stars: ev.stars, starCount: ev.starCount, ev, why: G.test.why, pred };
   $('rTitle').textContent = t(fell ? G.test.why : complete ? 'rStands' : 'rUnmet');
   $('rStars').innerHTML = complete ? starsHtml(ev.starCount, 'bigstars').replace('<span class="bigstars">', '').replace(/<\/span>$/, '') : '';
@@ -4114,6 +4185,7 @@ function applyTexts() {
   document.documentElement.lang = SET.lang; if (window.Arena) Arena.lang(SET.lang); // kit panel in the game's language
   for (const el of document.querySelectorAll('[data-t]')) { const k = el.dataset.t; if (k === 'legendKeys') el.innerHTML = t(k); else el.textContent = t(k); }
   for (const el of document.querySelectorAll('[data-tt]')) { const val = t(el.dataset.tt); el.title = val; if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', val); }
+  $('bNews').textContent = t('verLabel'); $('bNews').title = t('verOpen'); if (!$('news').hidden) openNews();
   $('bLang').textContent = SET.lang.toUpperCase(); $('bLang2').textContent = SET.lang === 'tr' ? 'EN' : 'TR';
   $('legendKeys').innerHTML = t('legendKeys');
   if ($('segCb')) for (const b of $('segCb').children) b.classList.toggle('on', (b.dataset.v === 'on') === !!SET.colorblind);
@@ -4341,6 +4413,9 @@ addEventListener('keydown', e => {
     const rm = $('radialMenu');
     if (rm && !rm.hidden) { closeRadial(); e.preventDefault(); return; }
   }
+  if (k === 'escape' && !$('news').hidden) { closeNews(); e.preventDefault(); return; }
+  if (k === 'escape' && G.state === 'map') { goTitle(); e.preventDefault(); return; }
+  if (k === 'escape' && G.state === 'brief') { openMap(); e.preventDefault(); return; }
   if (G.state === 'predict' && (k === 'p' || k === 'escape')) { predictBack(); e.preventDefault(); return; }
   if (k === 'p' || k === 'escape') { if (G.state === 'play' || G.state === 'test') { togglePause(); e.preventDefault(); } else if (G.state === 'settings') closeSettings(); return; }
   if (k === 'm') { toggleMusic(); return; } if (k === 'x') { toggleSfx(); return; } if (k === 'l') { setLang(SET.lang === 'tr' ? 'en' : 'tr'); return; } if (k === 'f') { toggleFullscreen(); return; } if (k === 'c') { toggleColorblind(); return; }
@@ -4354,7 +4429,7 @@ addEventListener('keyup', e => { if (e.key.toLowerCase() === 'v') G.showLines = 
 const on = (id, fn) => $(id).addEventListener('click', () => { bootAudio(); fn(); });
 on('bPlay', () => { sfxClick(); openMap(); }); on('bContinue', () => { sfxClick(); openBrief(firstUnsolved()); });
 on('bSettings', () => openSettings('title')); on('bLang2', () => setLang(SET.lang === 'tr' ? 'en' : 'tr')); on('bLang', () => setLang(SET.lang === 'tr' ? 'en' : 'tr'));
-on('bMapBack', goTitle); on('bBrBack', openMap); on('bBegin', () => { sfxClick(); beginPlay(G.daily ? [] : undefined); });
+on('bNews', openNews); on('bNewsBack', closeNews); on('bMapBack', goTitle); on('bBrBack', openMap); on('bBegin', () => { sfxClick(); beginPlay(G.daily ? [] : undefined); });
 on('bDaily', () => { sfxClick(); startDaily(); }); on('bA11y', () => { if (window.Arena) Arena.openSettings(); });
 on('bRShare', () => shareResult(false)); on('bEShare', () => shareResult(true));
 on('bRadial', () => {
