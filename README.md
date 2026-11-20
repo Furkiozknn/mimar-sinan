@@ -133,6 +133,14 @@ The live state is on `window.mimar`.
 
 ![Before and after](docs/redesign-before-after.png)
 
+## What's new in v1.1 (November 2026)
+
+- A **What's new** window and a version tag on the main menu (`v1.1 · Kasım 2026`).
+- A **master's ledger**: the last 8 tests (commission, stood or fell, stars, stone used, peak stress), kept locally under `arena.mimar.history`. Existing save keys are untouched.
+- A **More games** link on the main menu; `Esc` steps back from the commissions map and from a commission brief.
+- Page: Turkish title and description, Open Graph / Twitter card, tab icon, canonical link and a Turkish 404 page.
+- `node test/duman.mjs` is a small smoke test (needs `playwright-core` and a Chromium, nothing is committed). See [CHANGELOG.md](CHANGELOG.md) (Turkish).
+
 ## Running locally
 
 Serve the folder over HTTP (ES modules do not load from `file://`):
