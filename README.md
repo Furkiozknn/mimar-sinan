@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://furkiozknn.github.io/mimar-sinan/">
-    <img src="docs/card.jpg" width="100%" alt="Mimar Sinan: a 3D construction-physics puzzle about building Ottoman mosques. Click to play in your browser.">
+    <img src="docs/card-3d.jpg" width="100%" alt="Mimar Sinan: a 3D construction-physics puzzle about building Ottoman mosques. Click to play in your browser.">
   </a>
 </p>
 
@@ -29,13 +29,29 @@
 
 ## Features
 
+<p align="center">
+  <img src="docs/features.jpg" width="100%" alt="Annotated night view of a half-built Ottoman mosque with scaffolding, with five callouts: 15 commissions in 3 eras, real masonry statics, Sinan's solutions, live stress and collapse, and one file at 60 fps.">
+</p>
+
+<details>
+<summary><b>Feature details</b></summary>
+
 - **15 commissions across 3 historical eras:** Advance through Apprentice (village mescit, portico, Bayezid lesson), Journeyman (4-unit dome, minarets, first earthquake test, 8 piers), and Master (Rüstem Paşa, Şehzade, Mihrimah Sultan, Süleymaniye, Selimiye), aiming for 3 stars per level across 45 total stars.
 - **Authentic masonry statics simulation:** A custom pure JavaScript statics engine summing real thrust vectors against the classic middle-third rule—calculating arch thrust (0.3 *W*), dome outward push ((0.08 *s* + 0.10) *W*), half-dome counter-thrust, and compression limits (pier 56, wall 32, minaret 30) without external physics libraries.
 - **Sinan's architectural engineering:** Master authentic Ottoman solutions where half-domes absorb outward thrust, weight towers pull resultant vectors back inside slender piers, stepped buttresses brace 5-unit domes, and octagonal 8-pier layouts halve the thrust on each pier.
 - **Dynamic diagnostics & collapse FX:** Watch overstressed pieces crack, tip over about their base edge, scatter dust, and bring down what they carry; inspect live stress (green &rarr; yellow &rarr; red), hold `V` to visualize live thrust vectors and middle-third kern lines, or press `H` for ghost-block hints.
 - **Ultra-lean web performance:** A single self-contained `index.html` running Three.js r170 delivering steady 60 fps on Intel UHD 620 (33–66 draw calls across gameplay and earthquake tests; 380 textured houses and 7 domed mosques in the city), verified by an automated bot across 15/15 commissions and 45/45 stars with 0 JS errors.
 
+</details>
+
 ## How to play
+
+<p align="center">
+  <img src="docs/how-to-play.jpg" width="100%" alt="How to play: pick a piece and place it, watch stone budget and stress, then remove the scaffolding with Space to test the mosque, with the keyboard controls listed along the bottom.">
+</p>
+
+<details>
+<summary><b>Goal and steps</b></summary>
 
 > [!TIP]
 > **Goal:** Roof the hall (the blue cells) with a dome of the target size, keep windows open, raise minarets, stay within the stone budget, then remove the scaffolding. Earn up to 3 stars per commission: target dome size, stone left over, and a safety margin (stress &le; 80%, or &le; 90% in an earthquake).
@@ -43,6 +59,8 @@
 1. **Choose and place pieces:** Pick a structural piece from the bottom tray (`1`–`9`) and click a cell. Piers, walls, and buttresses stand on the ground; arches span two piers; domes rest on four corner supports; half-domes lean against the main dome; weight towers cap piers; minarets need their own cell.
 2. **Monitor stone & stress:** Track your remaining stone budget in the top bar. Stress displays live as color tints (green &rarr; yellow &rarr; red); toggle stress views with `T` or hold `V` to inspect thrust vectors and middle-third kern boundaries inside each pier.
 3. **Test the structure (`Space`):** Remove the scaffolding and watch gravity—and in late commissions, earthquake tremors—test your masonry. If resultant thrust stays inside the middle third, the mosque stands and earns up to 3 stars.
+
+</details>
 
 <details>
 <summary><b>The structural model</b></summary>
