@@ -3523,8 +3523,15 @@ function stilPlace() {
   for (let i = 0; i < ST.figs.length; i++) {
     const f = ST.figs[i], m = ST.meta[f.cell], w = workers[i];
     let x, z, h = (i >= 9 ? 1.45 : 1.15) * big;
-    // (on a narrow portrait screen the left edge of the view cuts the plinth side, so they step in onto the plinth rim)
-    if (i === 9) { x = -ex + (big > 1 ? 0.9 : -0.5); z = big > 1 ? 1.2 : 0.4; } else if (i === 10) { x = -ex + (big > 1 ? 0.7 : -0.9); z = big > 1 ? 3.0 : 2.1; } else if (w) { x = w.x; z = w.z; } else { f.s.visible = f.sh.visible = false; continue; }
+    // Portrait phone: the big figures would hide the build grid if they stood on the camera side, so every figure
+    // stands behind the two far edges of the grid (the camera looks from -x/+z): on screen their bodies rise away
+    // from the cells. The architect and the engineer stand mid far edge, the workers along both far edges.
+    if (big > 1) {
+      const hw = W / 2, hd = D / 2;
+      if (i === 9) { x = -0.6; z = -hd - 1.0; } else if (i === 10) { x = 0.8; z = -hd - 1.15; }
+      else if (i < 5) { x = hw + 1.0; z = -hd + (i + 0.5) * D / 5; }
+      else { const k = i - 5; x = [-hw + 0.2, -hw + 1.3, hw - 1.1, hw + 0.2][k]; z = -hd - 1.3 - (k & 1) * 0.3; }
+    } else if (i === 9) { x = -ex - 0.5; z = 0.4; } else if (i === 10) { x = -ex - 0.9; z = 2.1; } else if (w) { x = w.x; z = w.z; } else { f.s.visible = f.sh.visible = false; continue; }
     f.x = x; f.z = z; f.h = h; f.w = h * m[0] / m[1]; f.ph = i * 1.7; f.s.position.set(x, 0, z); f.s.scale.set(h / m[1], h / m[1], 1); // the sprite shows the whole square cell
     f.sh.position.set(x, 0.02, z); f.sh.scale.set(f.w * 0.9, 1, f.w * 0.5);
   }
