@@ -1203,6 +1203,98 @@ input[type=range] {
   .test span { display: none; }
 }
 @media (max-height: 500px) and (min-width: 820px) { .test span { display: inline; } }
+
+/* ==========================================================================
+   STIL 3D: the song video's warm sunset clay world (cream limestone, walnut, kaftan green, gold).
+   Soft rounded panels and buttons, the half-built mosque and the chibi architect and engineer on the title card.
+   ========================================================================== */
+:root {
+  --paper: #fbf3e4; --paper2: #f2e2c5; --paper3: #e6d1ab; --paper-hl: #fffaf0;
+  --ink: #3b2a1b; --ink2: #5f4a35; --ink3: #8a7256;
+  --line: rgba(110, 74, 38, 0.3); --line2: rgba(110, 74, 38, 0.15); --grid: rgba(110, 74, 38, 0.035);
+  --bp-bg: #2e2a24; --bp: #5a4128; --bp2: #432f1c; --bp-hl: #6e5134; --bpline: #fbf6ec;
+  --bpgrid: rgba(251, 246, 236, 0.05); --bpgrid-hi: rgba(251, 246, 236, 0.09);
+  --accent: #3f7a4f; --accent2: #4f9160; --accent-glow: rgba(63, 122, 79, 0.35);
+  --gold: #d8b26e; --gold-light: #f0d79c; --gold-dark: #a27a32; --gold-glow: rgba(216, 178, 110, 0.45);
+  --shadow-panel: 0 18px 40px rgba(60, 36, 16, 0.32), 0 3px 10px rgba(60, 36, 16, 0.16);
+  --shadow-btn: 0 3px 0 rgba(120, 84, 44, 0.28), 0 4px 10px rgba(60, 36, 16, 0.14);
+}
+html, body { background: #e9c99c; }
+.glass {
+  background-color: var(--paper);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 38%), linear-gradient(180deg, #fbf3e4 0%, #f3e4c8 100%);
+  background-size: auto; border: 0; border-radius: 18px;
+  box-shadow: var(--shadow-panel), inset 0 2px 0 rgba(255, 255, 255, 0.9), inset 0 -3px 0 rgba(170, 128, 76, 0.18);
+}
+.glass::before { inset: 5px; border: 1.5px solid rgba(216, 178, 110, 0.45); border-radius: 14px; }
+.corner { display: none; }
+.glass.bp {
+  background-color: #3a2c1e;
+  background-image: radial-gradient(120% 80% at 50% 0%, rgba(240, 160, 90, 0.28) 0%, rgba(240, 160, 90, 0) 60%), linear-gradient(180deg, #4a3624 0%, #2e2a24 100%);
+  background-size: auto; border: 0; color: var(--bpline);
+  box-shadow: 0 22px 50px rgba(30, 18, 8, 0.55), 0 4px 14px rgba(30, 18, 8, 0.3), inset 0 2px 0 rgba(255, 220, 170, 0.18);
+}
+.glass.bp::before { border-color: rgba(216, 178, 110, 0.4); }
+.overlay { background: rgba(58, 38, 20, 0.42); }
+.overlay.clear { background: rgba(58, 38, 20, 0.08); }
+.panel h2 { border-bottom: 2px solid rgba(216, 178, 110, 0.6); color: var(--ink); }
+.btn {
+  border-radius: 14px; border: 0;
+  background: linear-gradient(180deg, #fffaf0 0%, #f0dfc0 100%); color: var(--ink);
+  box-shadow: var(--shadow-btn), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+.btn:hover { background: linear-gradient(180deg, #fffdf6 0%, #f6e8cc 100%); box-shadow: 0 4px 0 rgba(120, 84, 44, 0.28), 0 8px 16px rgba(60, 36, 16, 0.18); }
+.btn.primary, .title .btn.primary {
+  background: linear-gradient(180deg, #f1cf86 0%, #d8a85a 100%); color: #3b2a1b; border: 0;
+  box-shadow: 0 4px 0 #a27a32, 0 8px 18px rgba(120, 72, 20, 0.35), inset 0 2px 0 rgba(255, 245, 215, 0.8);
+}
+.btn.primary:hover, .title .btn.primary:hover { background: linear-gradient(180deg, #f6da9c 0%, #e0b468 100%); box-shadow: 0 5px 0 #a27a32, 0 10px 22px rgba(120, 72, 20, 0.4), inset 0 2px 0 rgba(255, 245, 215, 0.8); }
+.btn:active, .btn.primary:active { transform: translateY(2px); }
+.title .btn { background: rgba(251, 246, 236, 0.1); color: var(--bpline); box-shadow: inset 0 0 0 1.5px rgba(216, 178, 110, 0.5); }
+.title .btn:hover { background: rgba(251, 246, 236, 0.2); box-shadow: inset 0 0 0 1.5px var(--gold); }
+.title .best { border-radius: 10px; background: rgba(0, 0, 0, 0.22); }
+.seg { border: 0; border-radius: 12px; box-shadow: inset 0 0 0 1.5px var(--line); }
+.seg button.on { background: var(--accent); color: #fff; }
+input[type=range] { accent-color: var(--accent); }
+.ibtn, .cbtn { border-radius: 12px; }
+.tbtn { border-radius: 14px; border: 0; background: linear-gradient(180deg, #fffaf0 0%, #efdcba 100%); box-shadow: var(--shadow-btn), inset 0 1px 0 #fff; }
+.tbtn.sel { background: linear-gradient(180deg, #6e5134 0%, #4a3624 100%); box-shadow: 0 0 0 2.5px var(--gold), 0 6px 16px rgba(60, 36, 16, 0.35); }
+.tbtn em { border-radius: 6px; }
+.tbtn i.p3d { width: 40px; height: 40px; margin: auto 0; }
+.tbtn i.p3d img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(60, 36, 16, 0.3)); }
+.test { border-radius: 14px; }
+#bTest i[data-icon] { background: url(assets/3d/parca-scaffold.webp) center / contain no-repeat; width: 28px; height: 28px; }
+#bTest i[data-icon] svg { visibility: hidden; }
+.chip { border-radius: 10px; }
+.chip i.p3d { width: 24px; height: 24px; }
+.chip i.p3d img { width: 100%; height: 100%; object-fit: contain; }
+.brand .logo-s { border-radius: 50%; padding: 0; border: 2px solid var(--gold); background: #f3dcb6 url(assets/3d/poz-mimar.webp) 50% 4% / 150% auto no-repeat; }
+.brand .logo-s svg { display: none; }
+/* title card: the half-built mosque at sunset as a header, the architect and the engineer stand on its lower edge */
+.title { padding-top: 18px; }
+.title .logo { display: none; }
+.kapak3d { position: relative; height: 150px; margin: 0 -18px 10px; border-radius: 14px; background: #c98a5a url(assets/3d/kapak.webp) 50% 40% / cover no-repeat; box-shadow: inset 0 -30px 30px -14px rgba(46, 42, 36, 0.75), 0 4px 12px rgba(0, 0, 0, 0.25); }
+.kapak3d img { position: absolute; bottom: -12px; height: 132px; width: auto; filter: drop-shadow(0 6px 6px rgba(30, 18, 8, 0.45)); pointer-events: none; }
+.kapak3d .f1 { left: 6px; }
+.kapak3d .f2 { right: 10px; height: 118px; }
+/* the result and ending cards: the architect beside the heading */
+.panel.side .rhead, #ending h2 { position: relative; }
+.fig3d { float: right; height: 92px; width: auto; margin: -8px -6px 0 8px; filter: drop-shadow(0 4px 5px rgba(60, 36, 16, 0.35)); pointer-events: none; }
+@media (max-width: 760px) {
+  .kapak3d { height: 118px; margin: 0 -10px 8px; }
+  .kapak3d img { height: 108px; } .kapak3d .f2 { height: 96px; }
+  .tbtn i.p3d { width: 32px; height: 32px; }
+  .fig3d { height: 70px; }
+}
+@media (max-height: 800px) {
+  .kapak3d { height: 112px; } .kapak3d img { height: 102px; } .kapak3d .f2 { height: 90px; }
+  .title { padding-bottom: 20px; }
+}
+@media (max-height: 500px) {
+  .kapak3d { height: 64px; } .kapak3d img { height: 60px; bottom: -4px; } .kapak3d .f2 { height: 54px; }
+  .tbtn i.p3d { width: 22px; height: 22px; }
+  .fig3d { display: none; }
+}
 </style>
 <script>/*ARENA-KIT:BEGIN v1.3.2 sha256:ce77e23fab7c*/
 /* ARENA-KIT v1 — shared layer for the 21 Claude Game Arena games.
@@ -2197,6 +2289,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test 
 <div id="title" class="overlay" role="dialog" aria-modal="true" aria-label="Mimar Sinan">
   <div class="panel glass title bp">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div class="kapak3d" aria-hidden="true"><img class="f1" src="assets/3d/poz-mimar.webp" alt=""><img class="f2" src="assets/3d/poz-muhendis.webp" alt=""></div>
     <div class="logo" id="logoBig"></div>
     <h1 class="serif" lang="tr">Mimar Sinan</h1>
     <p class="sub" data-t="subtitle"></p>
@@ -2292,6 +2385,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test 
 <div id="result" class="overlay clear" role="dialog" aria-modal="true" aria-labelledby="rTitle" hidden>
   <div class="panel glass side">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <img class="fig3d" src="assets/3d/poz-mimar-isaret.webp" alt="" aria-hidden="true">
     <div class="rhead"><h2 class="serif" id="rTitle"></h2><div class="bigstars" id="rStars"></div></div>
     <p class="rec" id="rRec" hidden></p>
     <p class="rpred" id="rDaily" hidden></p>
@@ -2312,6 +2406,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test 
 <div id="ending" class="overlay clear" role="dialog" aria-modal="true" aria-labelledby="endHeading" hidden>
   <div class="panel glass side">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <img class="fig3d" src="assets/3d/poz-mimar.webp" alt="" aria-hidden="true">
     <h2 id="endHeading" class="serif" data-t="endTitle" style="font-size:26px"></h2>
     <p class="sub" data-t="endSub" style="font-size:14px;color:var(--ink2);line-height:1.45"></p>
     <div class="kv" id="eKv"></div>
@@ -3021,8 +3116,9 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 600);
 // Art direction (redesign 2026-11): blueprint + warm limestone. Afternoon haze over the city and the sea.
-const LIME = 0xe3d5b8, LIME2 = 0xd4c4a4, LIME3 = 0xbfab85, LEAD = 0x6e7b85, LEAD2 = 0x9aa6b0, BLUE = 0x2f6e9e, GOLD = 0xd9b45a, INK = 0x1e3a5f;
-const SKY = { sunset: 0, day: { top: new THREE.Color(0x5b90c6), hor: new THREE.Color(0xeedfc4), fog: new THREE.Color(0xe6d6b9), sun: new THREE.Color(0xffe8c8), sunI: 2.0, hemi: 1.05 },
+// (Stil 3D: warm clay limestone and soft grey lead, as in the song video)
+const LIME = 0xf0dcbc, LIME2 = 0xe2c9a4, LIME3 = 0xcaa97e, LEAD = 0x858b95, LEAD2 = 0xb3b8bf, BLUE = 0x2f6e9e, GOLD = 0xd9b45a, INK = 0x1e3a5f;
+const SKY = { sunset: 0, day: { top: new THREE.Color(0x8fa6cf), hor: new THREE.Color(0xf6d2a4), fog: new THREE.Color(0xf0c595), sun: new THREE.Color(0xffdfb4), sunI: 2.0, hemi: 1.05 },
   dusk: { top: new THREE.Color(0x3d3a72), hor: new THREE.Color(0xf28a50), fog: new THREE.Color(0xd9916a), sun: new THREE.Color(0xff9d5c), sunI: 1.5, hemi: 0.7 } };
 scene.fog = new THREE.Fog(SKY.day.fog.clone(), 30, 190);
 const sun = new THREE.DirectionalLight(SKY.day.sun.clone(), SKY.day.sunI); sun.position.set(-18, 20, 12); sun.castShadow = renderer.shadowMap.enabled;
@@ -3329,6 +3425,7 @@ function placeProps(L) {
   workers.length = 0; const pal = [0x2F6E9E, 0xb5452c, 0xc9a34a, 0x5f9a58, 0xe8dcc0, 0x7a4a26, 0x2F6E9E, 0xd9b23c, 0x8a3a2a];
   for (let i = 0; i < WORKER_N; i++) { const side = i % 4; let x, z; if (side === 0) { x = -ex + 0.4 + i * 0.5; z = ez + 0.3; } else if (side === 1) { x = ex + 0.4; z = -ez + 1 + i * 0.45; } else if (side === 2) { x = ex - i * 0.6; z = ez + 0.2; } else { x = -ex + 0.3; z = -ez + i * 0.5; } workers.push({ x, z, phase: rng() * 6.28, speed: 0.6 + rng() * 0.6, col: pal[i], turban: i % 3 === 0 ? 0xf3ead8 : i % 3 === 1 ? 0xb5452c : 0x3b5b7a, ry: rng() * 6.28 }); bodies.setColorAt(i, _col.set(pal[i])); turbans.setColorAt(i, _col.set(workers[i].turban)); }
   bodies.instanceColor.needsUpdate = true; turbans.instanceColor.needsUpdate = true;
+  stilPlace();
 }
 // Hoisted transforms to eliminate per-frame allocations
 const _pm = new THREE.Matrix4(), _pq = new THREE.Quaternion(), _ps = new THREE.Vector3(1, 1, 1), _pp = new THREE.Vector3(), _pe = new THREE.Euler();
@@ -3341,6 +3438,114 @@ function animateProps(dt, tm) {
   animateGulls(tm); seaTex.offset.x += dt * 0.004; seaTex.offset.y += dt * 0.002;
   // freshly placed pieces settle: a short drop and squash
   for (const [, mm] of G.meshes) { const u = mm.userData; if (u.settled) continue; const a = (G.time - u.born) / 0.32; if (a >= 1) { u.settled = true; mm.scale.setScalar(1); mm.position.y = u.baseY; continue; } const k = (1 - a) * (1 - a); mm.position.y = u.baseY + k * 0.45; mm.scale.set(1 + k * 0.08, 1 - k * 0.06, 1 + k * 0.08); }
+  stilTick(tm);
+}
+
+// ---------------------------------------------------------------------------
+// Stil 3D (song video look): the master architect, the engineer and the workers are camera-facing chibi sprites cut
+// from one atlas; a warm sunset sky image; soft clay masonry. Drawing only. three.js draws a UUID from Math.random for
+// every new texture, material and object, so everything here is built once at boot inside sakin(), which lends
+// Math.random a private stream and puts the page's own back afterwards.
+// ---------------------------------------------------------------------------
+let ST_RND = 0x51a4a7;
+function sakin(fn) {
+  const r = Math.random;
+  Math.random = () => { ST_RND = (ST_RND + 0x6D2B79F5) >>> 0; let t = ST_RND; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  try { return fn(); } finally { Math.random = r; }
+}
+// atlas cells: 0 architect, 1 architect pointing, 2 engineer, 3-8 workers; [w, h] of each figure as a share of the cell
+const ST = { ready: false, figs: [], meta: [[0.628, 0.963], [0.634, 0.963], [0.562, 0.963], [0.65, 0.963], [0.709, 0.963], [0.756, 0.963], [0.806, 0.963], [0.678, 0.963], [0.534, 0.963]], big: 1 };
+const ST_PHONE = () => (innerWidth < innerHeight || isPhone) ? 1.7 : 1;
+sakin(() => {
+  const load = (p) => new Promise(res => new THREE.TextureLoader().load('assets/3d/' + p, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; res(t); }, undefined, () => res(null)));
+  // soft contact shadow under each figure
+  const sc = document.createElement('canvas'); sc.width = sc.height = 64;
+  { const x = sc.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(60,36,18,0.55)'); gr.addColorStop(0.6, 'rgba(60,36,18,0.22)'); gr.addColorStop(1, 'rgba(60,36,18,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); }
+  const shMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false });
+  const shGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  // 9 workers + the architect + the engineer, built now and only moved later
+  const cells = [3, 4, 5, 6, 7, 8, 3, 4, 6, 0, 2];
+  for (let i = 0; i < cells.length; i++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, alphaTest: 0.35, fog: true })); s.center.set(0.5, 0.0125); s.visible = false; s.frustumCulled = false;
+    const sh = new THREE.Mesh(shGeo, shMat); sh.visible = false; sh.renderOrder = 1;
+    yard.add(s, sh); ST.figs.push({ s, sh, cell: cells[i] });
+  }
+  if (FLAG.noassets) return; // ?noassets keeps the old drawn figures and sky
+  ASSETS.used = true; ASSETS.note = 'procedural + assets/3d sprites';
+  Promise.all([load('chibi.webp'), load('gok.webp')]).then(tx => sakin(() => {
+    if (tx[0]) {
+      for (const f of ST.figs) {
+        const t = tx[0].clone(); t.needsUpdate = true; const c = f.cell % 3, r = (f.cell / 3) | 0; t.repeat.set(1 / 3, 1 / 3); t.offset.set(c / 3, 1 - (r + 1) / 3);
+        f.s.material.map = t; f.s.material.needsUpdate = true; f.s.visible = f.sh.visible = true;
+      }
+      bodies.visible = heads.visible = turbans.visible = false;
+      ST.ready = true; stilPlace();
+    }
+    if (tx[1]) { // the song video's sunset clouds wrapped round the dome of the sky, horizon at the bottom of the picture
+      const t = tx[1]; t.wrapS = THREE.MirroredRepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; t.repeat.set(4, 2.6); t.offset.set(0, -1.32);
+      sky.material.map = t; sky.material.vertexColors = false; sky.material.color.set(0xffffff); sky.material.needsUpdate = true;
+    }
+  }));
+});
+// clay masonry: the ashlar texture redrawn as soft rounded blocks with a light top edge and a shaded lower edge (a toy
+// bevel), same 3 x 2 bond so the scale on every piece is unchanged; the colour-blind hatch textures are rebuilt on it
+sakin(() => {
+  const clay = (x, S) => {
+    const rows = 3, cols = 2, ch = S / rows, cw = S / cols, g = 5, rr = 14;
+    x.fillStyle = '#b9a88c'; x.fillRect(0, 0, S, S); // the joints
+    for (let r = 0; r < rows; r++) for (let c = -1; c <= cols; c++) {
+      const off = (r % 2) * cw / 2, bx = c * cw + off + g / 2, by = r * ch + g / 2, bw = cw - g, bh = ch - g, v = 0.965 + Math.random() * 0.035;
+      const gr = x.createLinearGradient(bx, by, bx + bw * 0.3, by + bh);
+      gr.addColorStop(0, `rgb(${255 * v | 0},${254 * v | 0},${250 * v | 0})`); gr.addColorStop(0.55, `rgb(${247 * v | 0},${242 * v | 0},${232 * v | 0})`); gr.addColorStop(1, `rgb(${226 * v | 0},${216 * v | 0},${198 * v | 0})`);
+      x.fillStyle = gr; x.beginPath(); x.roundRect(bx, by, bw, bh, rr); x.fill();
+      x.strokeStyle = 'rgba(255,255,255,.75)'; x.lineWidth = 2.5; x.beginPath(); x.moveTo(bx + rr, by + 2); x.lineTo(bx + bw - rr, by + 2); x.stroke();
+      x.strokeStyle = 'rgba(150,120,85,.35)'; x.lineWidth = 3; x.beginPath(); x.moveTo(bx + rr, by + bh - 2); x.lineTo(bx + bw - rr, by + bh - 2); x.stroke();
+    }
+    for (let i = 0; i < 500; i++) { const v = 215 + Math.random() * 40 | 0; x.fillStyle = `rgba(${v},${v - 8},${v - 20},${0.08 + Math.random() * 0.1})`; x.beginPath(); x.arc(Math.random() * S, Math.random() * S, 0.8 + Math.random() * 2.2, 0, 6.3); x.fill(); }
+  };
+  const hatch = (x, S, cross) => {
+    x.drawImage(stoneTex.image, 0, 0); const step = 32;
+    for (const [col, lw, d0] of [[cross ? 'rgba(18,22,38,0.85)' : 'rgba(20,32,54,0.78)', cross ? 4 : 3.8, 0], ['rgba(255,255,255,0.42)', 1.5, 2.5]]) {
+      x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'square'; x.beginPath();
+      for (let d = -S; d <= S; d += step) { x.moveTo(d + d0, 0); x.lineTo(d + S + d0, S); if (cross) { x.moveTo(d + d0, S); x.lineTo(d + S + d0, 0); } }
+      x.stroke();
+    }
+  };
+  for (const [t, f] of [[stoneTex, (x, S) => clay(x, S)], [hatchDiagTex, (x, S) => hatch(x, S, false)], [hatchCrossTex, (x, S) => hatch(x, S, true)]]) {
+    const c = t.image, x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height); f(x, c.width); t.needsUpdate = true;
+  }
+  plinthSideTex.needsUpdate = stepSideTex.needsUpdate = true;
+});
+// figure spots: workers keep their old places; the architect and the engineer stand by the plinth side the camera sees
+function stilPlace() {
+  if (!ST.ready || !G.L) return;
+  const W = G.L.grid[0], D = G.L.grid[1], ex = W / 2 + 1.6, ez = D / 2 + 1.6, big = ST_PHONE(); ST.big = big;
+  for (let i = 0; i < ST.figs.length; i++) {
+    const f = ST.figs[i], m = ST.meta[f.cell], w = workers[i];
+    let x, z, h = (i >= 9 ? 1.45 : 1.15) * big;
+    // Portrait phone: the big figures would hide the build grid if they stood on the camera side, so every figure
+    // stands behind the two far edges of the grid (the camera looks from -x/+z): on screen their bodies rise away
+    // from the cells. The architect and the engineer stand mid far edge, the workers along both far edges.
+    if (big > 1) {
+      const hw = W / 2, hd = D / 2;
+      if (i === 9) { x = -0.6; z = -hd - 1.0; } else if (i === 10) { x = 0.8; z = -hd - 1.15; }
+      else if (i < 5) { x = hw + 1.0; z = -hd + (i + 0.5) * D / 5; }
+      else { const k = i - 5; x = [-hw + 0.2, -hw + 1.3, hw - 1.1, hw + 0.2][k]; z = -hd - 1.3 - (k & 1) * 0.3; }
+    } else if (i === 9) { x = -ex - 0.5; z = 0.4; } else if (i === 10) { x = -ex - 0.9; z = 2.1; } else if (w) { x = w.x; z = w.z; } else { f.s.visible = f.sh.visible = false; continue; }
+    f.x = x; f.z = z; f.h = h; f.w = h * m[0] / m[1]; f.ph = i * 1.7; f.s.position.set(x, 0, z); f.s.scale.set(h / m[1], h / m[1], 1); // the sprite shows the whole square cell
+    f.sh.position.set(x, 0.02, z); f.sh.scale.set(f.w * 0.9, 1, f.w * 0.5);
+  }
+}
+// step sway and a little hop; time only, no Math.random
+function stilTick(tm) {
+  if (!ST.ready) return;
+  if (ST.big !== ST_PHONE()) stilPlace();
+  for (let i = 0; i < ST.figs.length; i++) {
+    const f = ST.figs[i]; if (f.h === undefined) continue; const w = workers[i], sp = w ? w.speed : 0.5;
+    const hop = Math.abs(Math.sin(tm * sp * 2 + f.ph)) * 0.05 * f.h;
+    f.s.position.y = hop; f.s.material.rotation = Math.sin(tm * sp * 2 + f.ph) * 0.05;
+    const k = 1 - hop * 0.8; f.sh.scale.set(f.w * 0.9 * k, 1, f.w * 0.5 * k);
+  }
 }
 // dust: soft round sprites
 function softSprite() { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(235,220,190,1)'); g.addColorStop(0.4, 'rgba(235,220,190,0.5)'); g.addColorStop(1, 'rgba(235,220,190,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
@@ -4018,7 +4223,7 @@ function openBrief(i) {
   G.daily = null; G.li = i; G.L = LEVELS[i]; G.state = 'brief'; hudVisible(false);
   $('brTitle').textContent = `${i + 1}. ${t('L')[i][0]}`; $('brChips').innerHTML = reqChips(G.L);
   $('brNote').innerHTML = `<b>${t('lesson')}:</b> ${t('L')[i][1]}`;
-  $('brPieces').innerHTML = `<span class="chip"><b>${t('pieces')}</b></span>` + G.L.tray.map(k => { const sp = trayPiece(k); return `<span class="chip"><i data-icon>${ICON[sp.t]}</i>${pieceName(sp)} · ${pieceCost(sp)}</span>`; }).join('');
+  $('brPieces').innerHTML = `<span class="chip"><b>${t('pieces')}</b></span>` + G.L.tray.map(k => { const sp = trayPiece(k); return `<span class="chip"><i data-icon class="p3d"><img src="assets/3d/parca-${sp.t}.webp" alt=""></i>${pieceName(sp)} · ${pieceCost(sp)}</span>`; }).join('');
   showOverlay('brief');
   // show the empty site behind the brief
   drawGrid(G.L); placeProps(G.L); frameLevel(); clearPieces(); buildScaffold(G.L, []); clearDebris(); scaffoldLower = 0; poles.visible = rails.visible = true;
@@ -4250,7 +4455,7 @@ function updateReqs() {
 }
 function buildTray() {
   const g = $('pieceGrp'); g.innerHTML = '';
-  G.L.tray.forEach((k, i) => { const sp = trayPiece(k); const b = document.createElement('button'); b.className = 'tbtn'; b.dataset.key = k; const nm = pieceName(sp); b.title = nm; b.setAttribute('aria-label', nm); b.innerHTML = `<small>${i + 1}</small><i data-icon>${ICON[sp.t]}</i><em>${sp.s ? sp.s + ' · ' : ''}${pieceCost(sp)}</em>`; b.addEventListener('click', () => { bootAudio(); selectTray(k); }); g.appendChild(b); });
+  G.L.tray.forEach((k, i) => { const sp = trayPiece(k); const b = document.createElement('button'); b.className = 'tbtn'; b.dataset.key = k; const nm = pieceName(sp); b.title = nm; b.setAttribute('aria-label', nm); b.innerHTML = `<small>${i + 1}</small><i data-icon class="p3d"><img src="assets/3d/parca-${sp.t}.webp" alt=""></i><em>${sp.s ? sp.s + ' · ' : ''}${pieceCost(sp)}</em>`; b.addEventListener('click', () => { bootAudio(); selectTray(k); }); g.appendChild(b); });
 }
 function refreshTray() {
   const left = G.L ? stoneLeft() : 0;
