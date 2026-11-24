@@ -1912,6 +1912,45 @@ input[type=range] { accent-color: var(--accent); }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 /*ARENA-KIT:END*/</script>
+<script>
+/* GL-GUARD: WebGL unavailable / three.js CDN unreachable -> clear TR+EN message instead of a stuck loading screen */
+(function () {
+  var T = {
+    gl: ['WebGL kullanılamıyor. Tarayıcında donanım hızlandırmayı aç ya da başka bir tarayıcı dene.', 'WebGL is unavailable. Enable hardware acceleration in your browser or try another browser.'],
+    net: ['Three.js yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.', 'Three.js could not be loaded. Check your connection and reload the page.']
+  };
+  var st = document.createElement('style');
+  st.textContent = '.glfail{margin:10px 0;padding:10px 12px;border-radius:12px;border:1px solid rgba(214,84,60,.65);background:rgba(214,84,60,.16);color:inherit;font-size:13px;line-height:1.4;text-align:left}.glfail p{margin:0 0 4px}.glfail p+p{margin:0;font-size:12px;opacity:.82}.glfail-fixed{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;width:min(92vw,420px);background:#2a1410;color:#f7e9e2;box-shadow:0 8px 30px rgba(0,0,0,.5)}';
+  document.head.appendChild(st);
+  var box = null, kind = '';
+  function show(k) {
+    if (kind === 'gl' && k !== 'gl') return;
+    kind = k; if (k === 'gl') window.__glFailed = true;
+    var pb = document.querySelector('#bPlay'); if (pb) pb.disabled = true;
+    var tr = /^tr/i.test(navigator.language || ''), m = T[k];
+    if (!box) {
+      box = document.createElement('div'); box.className = 'glfail'; box.setAttribute('role', 'alert');
+      var host = document.querySelector('#loadmsg');
+      if (host && host.getClientRects().length) { if (host.childElementCount) host.parentNode.insertBefore(box, host); else { host.textContent = ''; host.parentNode.insertBefore(box, host.nextSibling); } }
+      else { box.className += ' glfail-fixed'; document.body.appendChild(box); }
+    }
+    box.textContent = '';
+    [tr ? m[0] : m[1], tr ? m[1] : m[0]].forEach(function (s) { var p = document.createElement('p'); p.textContent = s; box.appendChild(p); });
+  }
+  window.__glFatal = show;
+  window.__glClear = function () { if (box && kind === 'net') { box.remove(); box = null; kind = ''; } };
+  // inert stand-in for the renderer when WebGL cannot start, so the menu code below still runs
+  window.__glStub = function (canvas) {
+    var p = new Proxy(function () {}, {
+      get: function (t, k) { return k === 'domElement' ? canvas : k === Symbol.toPrimitive ? function () { return 0; } : k === 'then' ? undefined : p; },
+      set: function () { return true; }, apply: function () { return p; }, construct: function () { return p; }
+    });
+    return p;
+  };
+  setTimeout(function () { if (!window.__three) show('net'); }, 15000);
+})();
+</script>
+
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"},"integrity":{"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js":"sha384-GY5FqjttLCFRt/McQbyaVdCk2O1IQtOeX8Py6NfD89BIAsIyJFRl4UgSXrk2vXAk","https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/utils/BufferGeometryUtils.js":"sha384-wOjwauvHlJO7K6APr7FmMGH2nupQa3Ndzas9bJZhsAMOK055efJud8ns4aYmASKv"}}
 </script>
@@ -2430,12 +2469,12 @@ window.addEventListener('unhandledrejection', e => { window.__errs.push('Promise
   const q = new URLSearchParams(location.search).get('lang');
   const tr = q ? q === 'tr' : !/^en/i.test(navigator.language || '');
   document.getElementById('loadmsg').textContent = tr ? 'Yükleniyor… 0/15' : 'Loading… 0/15';
-  setTimeout(() => { if (!window.__loaded) document.getElementById('loadmsg').textContent = tr ? 'Three.js yüklenemedi; internet bağlantısını kontrol et.' : 'Three.js could not load; check your connection.'; }, 20000);
 })();
 </script>
 
-<script type="module">
+<script type="module" onerror="window.__glFatal&&__glFatal('net')">
 import * as THREE from 'three';
+window.__three = true; if (window.__glClear) window.__glClear();
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // ---------------------------------------------------------------------------
@@ -3107,7 +3146,9 @@ const LEVELS = [
 // ---------------------------------------------------------------------------
 const $ = id => document.getElementById(id);
 const canvas = $('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+let glFail = false, renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
+catch (e) { glFail = true; renderer = window.__glStub(canvas); window.__glFatal('gl'); }
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
 // arena-kit: dynamic pixel ratio for weak GPUs, never above the game's own 1.5 cap
 if (window.Arena) Arena.perf.attach({ setPixelRatio: r => { renderer.setPixelRatio(r); if (FX) FX.setSize(innerWidth, innerHeight); } }, { max: Math.min(devicePixelRatio || 1, 1.5) });
@@ -3128,7 +3169,7 @@ const hemi = new THREE.HemisphereLight(0xe3edf8, 0xb09a74, SKY.day.hemi); scene.
 const fill = new THREE.DirectionalLight(0xbfd4ff, 0.3); fill.position.set(12, 8, -14); scene.add(fill);
 // arena-core v2 render preset: neutral tone mapping, a little room light, CSS vignette + grain, grade (no composer: on Intel UHD
 // the bloom composer cost 7-13% fps at 1280x720 for little gain in this daylight scene)
-const FX = window.ArenaCore ? ArenaCore.render.setup(renderer, scene, camera, { tonlama: 'neutral', pozlama: 1.08, ortam: 0.12, bloom: false, vinyet: 0.24, grain: 0.03, renk: { doygunluk: 1.08, kontrast: 1.05 } }) : null;
+const FX = window.ArenaCore && !glFail ? ArenaCore.render.setup(renderer, scene, camera, { tonlama: 'neutral', pozlama: 1.08, ortam: 0.12, bloom: false, vinyet: 0.24, grain: 0.03, renk: { doygunluk: 1.08, kontrast: 1.05 } }) : null;
 // Canvas textures: running-bond ashlar for masonry (white base, vertex colours give the hue), mottled earth for the hill, streaks for the sea
 function makeTex(size, draw, repeat = 1) { const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); t.anisotropy = 4; return t; }
 const stoneTex = makeTex(256, (x, S) => {
@@ -3766,7 +3807,7 @@ function updateGhost() {
   if (!spec) return;
   const p = { t: spec.t, x, z, r, s: spec.s };
   const why = canPlace(G.L, G.pieces, p);
-  ghost.geometry = buildGeo(p); pieceOrigin(G.L, p, G.pieces, ghost.position); if (p.t === 'tower') ghost.position.y = 2;
+  { const gg = buildGeo(p); if (ghost.geometry !== gg) ghost.geometry = gg; } pieceOrigin(G.L, p, G.pieces, ghost.position); if (p.t === 'tower') ghost.position.y = 2;
   ghostMat.color.set(hint ? 0xc9a34a : why ? 0xe05a48 : 0x8fd08a); ghostMat.opacity = hint ? 0.45 + Math.sin(G.time * 6) * 0.2 : 0.45; ghost.visible = true;
 }
 const LINE_MAX = 4000;
@@ -3774,9 +3815,13 @@ const lineGeo = new THREE.BufferGeometry(); lineGeo.setAttribute('position', new
 const lines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true, opacity: 0.95 })); lines.renderOrder = 50; lines.frustumCulled = false; lines.visible = false; site.add(lines);
 // Hoisted colors to avoid allocations when lines are visible
 const _lineWhite = new THREE.Color(0x1e3a5f), _lineBlue = new THREE.Color(0x4fb3ff);
+// the buffers only depend on the evaluation result and the piece list: rebuild on change, not every frame
+let _dlSim = null, _dlL = null, _dlN = -1;
 function drawLines(sim) {
+  if (sim === _dlSim && G.L === _dlL && G.pieces.length === _dlN) return;
+  _dlSim = sim; _dlL = G.L; _dlN = G.pieces.length;
   const pos = lineGeo.attributes.position.array, col = lineGeo.attributes.color.array; let n = 0;
-  const seg = (ax, ay, az, bx, by, bz, c) => { if (n >= LINE_MAX) return; pos.set([ax, ay, az, bx, by, bz], n * 6); col.set([c.r, c.g, c.b, c.r, c.g, c.b], n * 6); n++; };
+  const seg = (ax, ay, az, bx, by, bz, c) => { if (n >= LINE_MAX) return; const o = n * 6; pos[o] = ax; pos[o + 1] = ay; pos[o + 2] = az; pos[o + 3] = bx; pos[o + 4] = by; pos[o + 5] = bz; col[o] = c.r; col[o + 1] = c.g; col[o + 2] = c.b; col[o + 3] = c.r; col[o + 4] = c.g; col[o + 5] = c.b; n++; };
   const arrow = (x, y, z, dx, dz, len, c) => { const ex = x + dx * len, ez = z + dz * len; seg(x, y, z, ex, y, ez, c); const px = -dz, pz = dx; seg(ex, y, ez, ex - dx * 0.25 + px * 0.12, y, ez - dz * 0.25 + pz * 0.12, c); seg(ex, y, ez, ex - dx * 0.25 - px * 0.12, y, ez - dz * 0.25 - pz * 0.12, c); };
   for (const p of G.pieces) {
     const r = sim.res.get(p); if (!r || !PT[p.t].support || r.N === undefined) continue;
@@ -4166,7 +4211,7 @@ function refreshTitle() {
 const ARENA_URL = 'https://furkiozknn.github.io/mimar-sinan/';
 function dailyInfo() { if (!window.Arena) return null; const d = Arena.daily(), open = []; for (let i = 0; i < LEVELS.length; i++) if (levelOpen(i)) open.push(i); d.li = open[d.seed % open.length]; return d; }
 const dayText = d => String(d).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
-function startDaily() {
+function startDaily() { if (glFail) return;
   const d = dailyInfo(); if (!d) return;
   openBrief(d.li); G.daily = d;
   $('brTitle').textContent = `${t('daily')} ${dayText(d.day)} · ${d.li + 1}. ${t('L')[d.li][0]}`;
@@ -4783,7 +4828,7 @@ function loadStep() {
     if (FLAG.sim > 0) window.mimarSim(FLAG.sim);
   }
 }
-setTimeout(loadStep, 0);
+if (!glFail) setTimeout(loadStep, 0); // no WebGL: the title menu stays readable and Play stays off
 </script>
 <script>
 // HUD'ın alt kenarı (--hudb): istek notları HUD'ın altına yerleşir.
