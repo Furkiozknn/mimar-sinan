@@ -1922,23 +1922,56 @@ input[type=range] { accent-color: var(--accent); }
   var st = document.createElement('style');
   st.textContent = '.glfail{margin:10px 0;padding:10px 12px;border-radius:12px;border:1px solid rgba(214,84,60,.65);background:rgba(214,84,60,.16);color:inherit;font-size:13px;line-height:1.4;text-align:left}.glfail p{margin:0 0 4px}.glfail p+p{margin:0;font-size:12px;opacity:.82}.glfail-fixed{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;width:min(92vw,420px);background:#2a1410;color:#f7e9e2;box-shadow:0 8px 30px rgba(0,0,0,.5)}';
   document.head.appendChild(st);
-  var box = null, kind = '';
+  var box = null, kind = '', lang = null, hid = [];
+  var st2 = document.createElement('style');
+  st2.textContent = 'html.glfail-on.glfail-modal::after{content:"";position:fixed;left:0;top:0;right:0;bottom:0;z-index:9998;background:rgba(20,12,8,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}.glfail h2{margin:0 0 8px;font-size:18px;line-height:1.25;text-align:center;color:inherit;font-family:inherit}.glfail .glrow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.glfail button{margin-top:8px;padding:6px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:inherit;font:inherit;cursor:pointer}.glfail button.glpri{background:#7A1E12;border-color:#7A1E12;color:#fff}';
+  document.head.appendChild(st2);
+  function hide(e) { if (e && !e.__glh) { e.__glh = 1; hid.push([e, e.style.getPropertyValue('display'), e.style.getPropertyPriority('display')]); e.style.setProperty('display', 'none', 'important'); } }
+  /* hide menu items that cannot work in this state: every button when the 3D module never loaded, empty buttons / hint lines and "loading" text otherwise */
+  function unhide() { hid.forEach(function (h) { h[0].__glh = 0; h[0].style.setProperty('display', h[1], h[2]); }); hid = []; }
+  function clean() {
+    unhide();
+    var q = document.querySelectorAll('button,.btn,.how,.best,[role=button]'), i, e, t, dead;
+    for (i = 0; i < q.length; i++) {
+      e = q[i]; if (e.closest('.glfail')) continue;
+      t = (e.textContent || '').trim(); if (e.tagName === 'A' && t) continue;
+      dead = kind === 'net' ? (e.tagName === 'BUTTON' || /(^|\s)btn(\s|$)/.test(e.className)) : (!t && !e.querySelector('img,canvas,svg') && !e.getAttribute('aria-label'));
+      if (!t && /(^|\s)(how|best)(\s|$)/.test(e.className)) dead = true;
+      if (dead) hide(e);
+    }
+    q = document.querySelectorAll('body *');
+    for (i = 0; i < q.length; i++) { e = q[i]; if (!e.children.length && !e.closest('.glfail') && /^(Yükleniyor|Loading)[….]*\s*\d*(\/\d+)?$/.test((e.textContent || '').trim())) hide(e); }
+  }
+  function curLang() { var l = (document.documentElement.getAttribute('lang') || '').slice(0, 2).toLowerCase(); return l === 'en' || l === 'tr' ? l : (/^tr/i.test(navigator.language || '') ? 'tr' : 'en'); }
+  function paint() {
+    if (!box) return;
+    var tr = lang === 'tr', m = T[kind]; box.textContent = '';
+    if (box.className.indexOf('glfail-fixed') > -1) { var h = document.createElement('h2'); h.textContent = (document.title || '').split(/\s[—–\-|·:]\s/)[0].trim(); if (h.textContent) box.appendChild(h); }
+    [tr ? m[0] : m[1], tr ? m[1] : m[0]].forEach(function (s) { var p = document.createElement('p'); p.textContent = s; box.appendChild(p); });
+    if (kind === 'net') {
+      var row = document.createElement('div'); row.className = 'glrow';
+      var rb = document.createElement('button'); rb.type = 'button'; rb.className = 'glpri'; rb.textContent = tr ? 'Yeniden dene' : 'Retry'; rb.onclick = function () { location.reload(); };
+      var sw = document.createElement('button'); sw.type = 'button'; sw.textContent = tr ? 'English' : 'Türkçe'; sw.onclick = function () { lang = lang === 'tr' ? 'en' : 'tr'; paint(); };
+      row.appendChild(rb); row.appendChild(sw); box.appendChild(row);
+    }
+  }
   function show(k) {
     if (kind === 'gl' && k !== 'gl') return;
     kind = k; if (k === 'gl') window.__glFailed = true;
     var pb = document.querySelector('#bPlay'); if (pb) pb.disabled = true;
-    var tr = /^tr/i.test(navigator.language || ''), m = T[k];
+    if (!lang) lang = curLang();
     if (!box) {
       box = document.createElement('div'); box.className = 'glfail'; box.setAttribute('role', 'alert');
       var host = document.querySelector('#loadmsg');
       if (host && host.getClientRects().length) { if (host.childElementCount) host.parentNode.insertBefore(box, host); else { host.textContent = ''; host.parentNode.insertBefore(box, host.nextSibling); } }
-      else { box.className += ' glfail-fixed'; document.body.appendChild(box); }
+      else { box.className += ' glfail-fixed'; document.body.appendChild(box); document.documentElement.classList.add('glfail-modal'); }
     }
-    box.textContent = '';
-    [tr ? m[0] : m[1], tr ? m[1] : m[0]].forEach(function (s) { var p = document.createElement('p'); p.textContent = s; box.appendChild(p); });
+    document.documentElement.classList.add('glfail-on');
+    paint(); clean(); [300, 800, 1600, 3000, 6000].forEach(function (d) { setTimeout(clean, d); });
   }
+  try { new MutationObserver(function () { if (box && kind === 'gl') { var l = curLang(); if (l !== lang) { lang = l; paint(); } } }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] }); } catch (e) {}
   window.__glFatal = show;
-  window.__glClear = function () { if (box && kind === 'net') { box.remove(); box = null; kind = ''; } };
+  window.__glClear = function () { if (box && kind === 'net') { box.remove(); box = null; kind = ''; document.documentElement.classList.remove('glfail-on', 'glfail-modal'); unhide(); } };
   // inert stand-in for the renderer when WebGL cannot start, so the menu code below still runs
   window.__glStub = function (canvas) {
     var p = new Proxy(function () {}, {
